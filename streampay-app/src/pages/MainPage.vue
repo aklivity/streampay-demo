@@ -1,5 +1,5 @@
 <template>
-  <q-page class="items-center" style="margin-left: 12%; margin-right: 12%; margin-top: 20px;">
+  <q-page class="items-center" style="margin-left: 12%; margin-right: 12%; margin-top: 70px;">
     <div class="items-center text-primary text-h4" style="margin-left: 40%; margin-bottom: 20px;">
       Activities
     </div>

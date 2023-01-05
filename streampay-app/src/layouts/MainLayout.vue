@@ -6,7 +6,6 @@
       :width="300"
       :breakpoint="500"
       bordered
-      elevated
     >
       <div class="absolute-top"  style="height: 150px; margin-top: 15px;">
         <div class="absolute-top">
@@ -30,6 +29,7 @@
           class="full-width text-white"
           label="Pay or Request"
           rounded
+          @click="this.$router.push({ path: '/payorrequest' })"
         />
       </div>
 
@@ -45,18 +45,18 @@
       <q-list class="text-h6" style="margin-top: 20px;">
         <q-item clickable v-ripple>
           <q-item-section avatar>
-            <q-icon size="36px" color="primary" name="analytics" />
-          </q-item-section>
-
-          <q-item-section>Statement</q-item-section>
-        </q-item>
-
-        <q-item clickable v-ripple>
-          <q-item-section avatar>
             <q-icon size="36px" color="primary" name="notifications" />
           </q-item-section>
 
           <q-item-section>Notification</q-item-section>
+        </q-item>
+
+        <q-item clickable v-ripple>
+          <q-item-section avatar>
+            <q-icon size="36px" color="primary" name="analytics" />
+          </q-item-section>
+
+          <q-item-section>Statement</q-item-section>
         </q-item>
       </q-list>
 
@@ -67,6 +67,7 @@
           class="full-width text-white"
           label="Logout"
           rounded
+          @click="logout"
         />
       </div>
     </q-drawer>

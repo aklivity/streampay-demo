@@ -3,7 +3,7 @@
     <div class="q-pa-md row items-start q-gutter-md">
       <q-card square class="shadow-24" style="text-align: center; width:400px;height:340px;">
         <q-card-section>
-          <div class="text-h3 text-primary">StreamPay</div>
+          <div class="text-weight-bold text-h3 text-primary">StreamPay</div>
         </q-card-section>
 
         <q-separator/>
