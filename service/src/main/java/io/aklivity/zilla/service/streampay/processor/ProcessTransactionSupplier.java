@@ -3,12 +3,16 @@
  */
 package io.aklivity.zilla.service.streampay.processor;
 
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.ProcessorSupplier;
 import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 
+import io.aklivity.zilla.service.streampay.model.Balance;
 import io.aklivity.zilla.service.streampay.model.Transaction;
 
 public class ProcessTransactionSupplier implements ProcessorSupplier<String, Transaction, String, Transaction>
@@ -33,7 +37,7 @@ public class ProcessTransactionSupplier implements ProcessorSupplier<String, Tra
     class AggregateBalance implements Processor<String, Transaction, String, Transaction>
     {
         private ProcessorContext context;
-        private KeyValueStore<String, Double> balanceStore;
+        private KeyValueStore<String, Balance> balanceStore;
 
         @Override
         public void init(
@@ -47,10 +51,16 @@ public class ProcessTransactionSupplier implements ProcessorSupplier<String, Tra
         public void process(
             Record<String, Transaction> record)
         {
+            final Headers balanceRecordHeaders = new RecordHeaders();
+            balanceRecordHeaders.add(new RecordHeader("content-type", "application/json".getBytes()));
             final String userId = record.key();
-            final Record<String, Double> newBalance = new Record<>(userId,
-                Double.sum(balanceStore.get(userId), record.value().getAmount()), record.timestamp());
-            context.forward(newBalance, balanceName);
+            double currentBalance = balanceStore.get(userId) == null ? 0 : balanceStore.get(userId).getBalance();
+            final double newBalanceValue = Double.sum(currentBalance, record.value().getAmount());
+            final Balance newBalance = Balance.builder().balance(newBalanceValue).timestamp(record.timestamp()).build();
+            final Record<String, Balance> newBalanceRecord = new Record<>(userId,
+                newBalance, record.timestamp(), balanceRecordHeaders);
+            context.forward(newBalanceRecord, balanceName);
+            balanceStore.put(userId, newBalance);
         }
     }
 }

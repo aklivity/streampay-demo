@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import io.aklivity.zilla.service.streampay.model.Balance;
 import io.aklivity.zilla.service.streampay.model.Command;
 import io.aklivity.zilla.service.streampay.model.PaymentRequest;
 import io.aklivity.zilla.service.streampay.model.Transaction;
@@ -27,10 +28,10 @@ public class PaymentTopology
 {
     private final Serde<String> stringSerde = Serdes.String();
     private final Serde<byte[]> bytesSerde = Serdes.ByteArray();
-    private final Serde<Double> doubleSerde = Serdes.Double();
     private final Serde<Command> commandSerde = SerdeFactory.commandSerde();
     private final Serde<PaymentRequest> paymentRequestSerde = SerdeFactory.jsonSerdeFor(PaymentRequest.class, false);
     private final Serde<Transaction> transactionSerde = SerdeFactory.jsonSerdeFor(Transaction.class, false);
+    private final Serde<Balance> balanceSerde = SerdeFactory.jsonSerdeFor(Balance.class, false);
 
     @Value("${commands.topic:commands}")
     String commandsTopic;
@@ -67,7 +68,7 @@ public class PaymentTopology
         final StoreBuilder balanceStoreBuilder = Stores.keyValueStoreBuilder(
             Stores.persistentKeyValueStore(balanceStoreName),
             stringSerde,
-            doubleSerde);
+            balanceSerde);
 
         final StoreBuilder idempotencyKeyStoreBuilder = Stores.keyValueStoreBuilder(
             Stores.persistentKeyValueStore(idempotencyKeyStoreName),
@@ -93,7 +94,7 @@ public class PaymentTopology
                 transactionsTopic)
             .addProcessor(processTransaction, new ProcessTransactionSupplier(balanceStoreName, balancesSink),
                 transactionsSourceSource)
-            .addSink(balancesSink, balancesTopic, stringSerde.serializer(), doubleSerde.serializer(), processTransaction)
+            .addSink(balancesSink, balancesTopic, stringSerde.serializer(), balanceSerde.serializer(), processTransaction)
             .addStateStore(balanceStoreBuilder, processTransaction, processValidCommand)
             .addStateStore(idempotencyKeyStoreBuilder, validateCommand);
 

@@ -17,6 +17,7 @@ import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.logging.log4j.util.Strings;
 
+import io.aklivity.zilla.service.streampay.model.Balance;
 import io.aklivity.zilla.service.streampay.model.Command;
 import io.aklivity.zilla.service.streampay.model.PayCommand;
 import io.aklivity.zilla.service.streampay.model.PaymentRequest;
@@ -53,7 +54,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
     {
         ProcessorContext context;
 
-        KeyValueStore<String, Double> balanceStore;
+        KeyValueStore<String, Balance> balanceStore;
 
         @FunctionalInterface
         interface CommandProcessor
@@ -114,13 +115,15 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
             final String userIdValue = new String(userId.value());
             if (validateTransaction(userIdValue, payCommand.getAmount()))
             {
+                final Headers transactionRecordHeaders = new RecordHeaders();
+                transactionRecordHeaders.add(new RecordHeader("content-type", "application/json".getBytes()));
                 final Record<String, Transaction> withdrawalsTransaction = new Record<>(userIdValue,
                     Transaction.builder()
                         .id(UUID.randomUUID())
                         .amount(-payCommand.getAmount())
                         .timestamp(record.timestamp())
                         .build(),
-                    record.timestamp());
+                    record.timestamp(), transactionRecordHeaders);
 
                 context.forward(withdrawalsTransaction, transactionName);
 
@@ -130,7 +133,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
                         .amount(payCommand.getAmount())
                         .timestamp(record.timestamp())
                         .build(),
-                    record.timestamp());
+                    record.timestamp(), transactionRecordHeaders);
 
                 context.forward(depositTransaction, transactionName);
 
@@ -163,7 +166,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
             final Record reply = record.withHeaders(newResponseHeaders).withValue(Strings.EMPTY);
             context.forward(reply, replyTo);
 
-            final Record paymentRequest = new Record(UUID.randomUUID(),
+            final Record paymentRequest = new Record(UUID.randomUUID().toString(),
                 PaymentRequest.builder()
                     .userId(new String(userId.value()))
                     .amount(requestCommand.getAmount())
@@ -194,8 +197,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
             String userId,
             double amount)
         {
-            Double currentBalance = balanceStore.get(userId);
-            currentBalance = currentBalance != null ? currentBalance : 0;
+            Double currentBalance = balanceStore.get(userId) != null ? balanceStore.get(userId).getBalance() : 0;
             return currentBalance - amount >= 0;
         }
     }

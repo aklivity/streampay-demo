@@ -57,7 +57,7 @@ export default defineComponent({
     const router = useRouter();
     api.get('/balances/user1')
       .then((response) => {
-        balance.value = response.data;
+        balance.value = response.data.balance;
       })
       .catch(() => {
         balance.value = 0;
