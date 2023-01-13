@@ -1,16 +1,15 @@
+/*
+ * Copyright 2021-2022 Aklivity. All rights reserved.
+ */
 package io.aklivity.zilla.service.streampay.processor;
 
-import io.aklivity.zilla.service.streampay.model.Command;
-import io.aklivity.zilla.service.streampay.model.Transaction;
-import org.apache.kafka.common.header.Header;
-import org.apache.kafka.common.header.Headers;
-import org.apache.kafka.common.header.internals.RecordHeaders;
-import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.processor.api.Processor;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
 import org.apache.kafka.streams.processor.api.ProcessorSupplier;
 import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
+
+import io.aklivity.zilla.service.streampay.model.Transaction;
 
 public class ProcessTransactionSupplier implements ProcessorSupplier<String, Transaction, String, Transaction>
 {

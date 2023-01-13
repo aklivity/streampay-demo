@@ -1,11 +1,11 @@
 <template>
   <div style="margin-left: 12%; margin-right: 12%; margin-top: 40px;">
     <div class="text-center text-primary text-h4" style="margin: 20px 35% 40px 30%;">
-      $ 0
+      $ {{ balance }}
     </div>
     <q-form
-      @submit="onSubmit"
-      @reset="onReset"
+      @submit="onPay"
+      @reset="onRequest"
       class="q-gutter-md"
     >
       <q-select
@@ -14,17 +14,21 @@
         label="To"
         use-input
         outlined
+        v-model="user"
+        :options="userOptions"
       />
 
       <q-input
         label="Amount"
         type="number"
+        v-model="amount"
         lazy-rules
         outlined
       />
 
       <q-input
-        label="Note"
+        v-model="notes"
+        label="Notes"
         type="textarea"
         outlined
       />
@@ -39,46 +43,102 @@
 </template>
 
 <script>
-import { useQuasar } from 'quasar'
 import {defineComponent, ref} from 'vue'
+import {api} from "boot/axios";
+import {useQuasar} from "quasar";
+import {useRouter} from "vue-router";
+import {v4} from "uuid";
 
 export default defineComponent({
   name: 'PayOrRequestForm',
   setup () {
     const $q = useQuasar()
+    const balance = ref(0);
+    const router = useRouter();
+    api.get('/balances/user1')
+      .then((response) => {
+        balance.value = response.data;
+      })
+      .catch(() => {
+        balance.value = 0;
+      });
 
-    const name = ref(null)
-    const age = ref(null)
-    const accept = ref(false)
+    const user = ref(null);
+    const userOptions = ref([]);
+    api.get('/users')
+      .then((response) => {
+        const users = response.data;
+        for(let user of users) {
+          if (user.id != 'user1') {
+            userOptions.value.push(
+              {
+                label: user.name,
+                value: user.id
+              }
+            );
+          }
+        }
+      });
+    const amount = ref(0);
+    const notes = ref("");
 
     return {
-      name,
-      age,
-      accept,
-
-      onSubmit () {
-        if (accept.value !== true) {
+      balance,
+      user,
+      userOptions,
+      amount,
+      notes,
+      onPay () {
+        if (balance.value - amount.value > 0) {
+          api.post('/pay', {
+            userId: user.value.value,
+            amount: amount.value,
+            notes: notes.value
+          },{
+            headers: {
+              'Idempotency-Key': v4()
+            }}).then(function () {
+            router.push({ path: '/main' });
+          })
+            .catch(function (error) {
+              $q.notify({
+                position: 'top',
+                color: 'red-5',
+                textColor: 'white',
+                icon: 'error',
+                message: error
+              });
+            });
+        } else {
           $q.notify({
+            position: 'top',
             color: 'red-5',
             textColor: 'white',
-            icon: 'warning',
-            message: 'You need to accept the license and terms first'
-          })
-        }
-        else {
-          $q.notify({
-            color: 'green-4',
-            textColor: 'white',
-            icon: 'cloud_done',
-            message: 'Submitted'
-          })
+            icon: 'error',
+            message: "You don't have enough balance."
+          });
         }
       },
-
-      onReset () {
-        name.value = null
-        age.value = null
-        accept.value = false
+      onRequest () {
+        api.post('/request', {
+          userId: user.value.value,
+          amount: amount.value,
+          notes: notes.value
+        },{
+          headers: {
+            'Idempotency-Key': v4()
+        }}).then(function () {
+          router.push({ path: '/main' });
+        })
+        .catch(function (error) {
+          $q.notify({
+            position: 'top',
+            color: 'red-5',
+            textColor: 'white',
+            icon: 'error',
+            message: error
+          });
+        });
       }
     }
   }

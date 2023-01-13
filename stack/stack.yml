@@ -45,34 +45,36 @@ services:
     entrypoint: [ '/bin/sh', '-c' ]
     command: |
       "
+      sleep 10
+
+      # Create a user
+      rpk acl user create user -p redpanda --api-urls redpanda.internal.net:9644
+      
       rpk topic create commands --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
       rpk topic create replies --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
       rpk topic create transactions --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
       rpk topic create balances -c cleanup.policy=compact --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
       rpk topic create payment-requests -c cleanup.policy=compact --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
+      rpk topic create users -c cleanup.policy=compact --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
       "
-#  streampay-service:
-#    image: "streampay-service:latest"
-#    networks:
-#      - net0
-#    environment:
-#      SPRING_KAFKA_APPLICATION_ID: stream-service
-#      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka.internal.net:29092
-#      CHAT_USERS_TOPIC: users
-#      CHAT_CHANNELS_TOPIC: channels
-#      CHAT_SUBSCRIPTIONS_TOPIC: subscriptions
-#      CHAT_COMMANDS_TOPIC: commands
-#      CHAT_MESSAGEs_TOPIC: messages
+  streampay-service:
+    image: "streampay-service:develop-SNAPSHOT"
+    networks:
+      - net0
+    environment:
+      SPRING_KAFKA_APPLICATION_ID: stream-service
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: redpanda.internal.net:29092
+      SPRING_KAFKA_SECURITY_PROTOCOL: SASL_PLAINTEXT
 #
-#  zilla:
-#    image: "ghcr.io/aklivity/zilla:develop-SNAPSHOT"
-#    hostname: "zilla"
-#    command: [ "start", "-v", "-e"]
-#    volumes:
-#      - ./zilla.json:/zilla.json:ro
-#    networks:
-#      - net0
-#    ports:
-#      - "8080:8080"
-#      - "9090:9090"
+  zilla:
+    image: "ghcr.io/aklivity/zilla:latest"
+    hostname: "zilla"
+    command: [ "start", "-v", "-e"]
+    volumes:
+      - ./zilla.json:/zilla.json:ro
+    networks:
+      - net0
+    ports:
+      - "8080:8080"
+      - "9090:9090"
 

@@ -18,7 +18,6 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.annotation.EnableKafkaStreams;
 import org.springframework.kafka.config.KafkaStreamsConfiguration;
 
-
 @Configuration
 @EnableKafka
 @EnableKafkaStreams
@@ -26,12 +25,18 @@ public class KafkaConfig
 {
     @Value("${spring.kafka.bootstrap-servers:localhost:9092}")
     private String bootstrapServers;
-    @Value("${spring.kafka.security-protocol:PLAINTEXT}")
+    @Value("${spring.kafka.security-protocol:SASL_PLAINTEXT}")
     private String securityProtocol;
+    @Value("${spring.kafka.sasl-mechanism:SCRAM-SHA-256}")
+    private String saslMechanism;
     @Value("${spring.kafka.application-id}")
     private String applicationId;
     @Value("${spring.kafka.streams.state.dir:#{null}}")
     private String stateDir;
+
+    private final String jaasTemplate = "org.apache.kafka.common.security.scram.ScramLoginModule required" +
+        " username=\"%s\" password=\"%s\";";
+    private final String jaasCfg = String.format(jaasTemplate, "user", "redpanda");
 
     public KafkaConfig()
     {
@@ -42,10 +47,12 @@ public class KafkaConfig
     )
     KafkaStreamsConfiguration kafkaStreamsConfig()
     {
-        Map<String, Object> props = new HashMap();
+        final Map<String, Object> props = new HashMap();
         props.put("application.id", this.applicationId);
         props.put("bootstrap.servers", this.bootstrapServers);
         props.put("security.protocol", this.securityProtocol);
+        props.put("sasl.mechanism", saslMechanism);
+        props.put("sasl.jaas.config", jaasCfg);
         props.put("default.key.serde", Serdes.String().getClass().getName());
         props.put("default.value.serde", Serde.class.getName());
         props.put("default.deserialization.exception.handler", LogAndContinueExceptionHandler.class);

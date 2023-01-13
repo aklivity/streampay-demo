@@ -3,7 +3,6 @@
  */
 package io.aklivity.zilla.service.streampay.serde;
 
-import io.aklivity.zilla.service.streampay.model.RequestCommand;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
@@ -14,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.aklivity.zilla.service.streampay.model.Command;
 import io.aklivity.zilla.service.streampay.model.PayCommand;
+import io.aklivity.zilla.service.streampay.model.RequestCommand;
 import io.confluent.kafka.serializers.jackson.Jackson;
 
 public class CommandJsonDeserializer implements Deserializer<Command>

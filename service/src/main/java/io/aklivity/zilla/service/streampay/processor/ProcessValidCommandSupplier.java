@@ -1,26 +1,27 @@
+/*
+ * Copyright 2021-2022 Aklivity. All rights reserved.
+ */
 package io.aklivity.zilla.service.streampay.processor;
 
+import java.util.Map;
+import java.util.UUID;
 
-import io.aklivity.zilla.service.streampay.model.Command;
-import io.aklivity.zilla.service.streampay.model.Event;
-import io.aklivity.zilla.service.streampay.model.PayCommand;
-import io.aklivity.zilla.service.streampay.model.PaymentRequest;
-import io.aklivity.zilla.service.streampay.model.RequestCommand;
-import io.aklivity.zilla.service.streampay.model.Transaction;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.apache.kafka.streams.processor.api.Processor;
-import org.apache.kafka.streams.processor.api.ProcessorSupplier;
 import org.apache.kafka.streams.processor.api.ProcessorContext;
+import org.apache.kafka.streams.processor.api.ProcessorSupplier;
 import org.apache.kafka.streams.processor.api.Record;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.logging.log4j.util.Strings;
 
-import java.util.Map;
-import java.util.UUID;
-
+import io.aklivity.zilla.service.streampay.model.Command;
+import io.aklivity.zilla.service.streampay.model.PayCommand;
+import io.aklivity.zilla.service.streampay.model.PaymentRequest;
+import io.aklivity.zilla.service.streampay.model.RequestCommand;
+import io.aklivity.zilla.service.streampay.model.Transaction;
 
 public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Command, String, Command>
 {
@@ -60,11 +61,11 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
             void process(Record<String, Command> record);
         }
 
-        final Map<Class<?>, CommandProcessor> PROCESSORS =
-        Map.of(
-            PayCommand.class, this::processPayCommand,
-            RequestCommand.class, this::processPaymentRequestCommand
-        );
+        final Map<Class<?>, CommandProcessor> processors =
+            Map.of(
+                PayCommand.class, this::processPayCommand,
+                RequestCommand.class, this::processPaymentRequestCommand
+            );
 
         @Override
         public void init(
@@ -88,7 +89,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
             }
             else
             {
-                final CommandProcessor commandProcessor = PROCESSORS.get(command.getClass());
+                final CommandProcessor commandProcessor = processors.get(command.getClass());
                 if (commandProcessor != null)
                 {
                     commandProcessor.process(record);
@@ -105,7 +106,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
         {
             final PayCommand payCommand = (PayCommand) record.value();
             final Headers headers = record.headers();
-            final Header userId = headers.lastHeader("userId");
+            final Header userId = headers.lastHeader("user-id");
             final Header correlationId = headers.lastHeader("zilla:correlation-id");
             final Headers newResponseHeaders = new RecordHeaders();
             newResponseHeaders.add(correlationId);
@@ -148,13 +149,15 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
         {
             final RequestCommand requestCommand = (RequestCommand) record.value();
             final Headers headers = record.headers();
-            final Header userId = headers.lastHeader("userId");
+            final Header userId = headers.lastHeader("user-id");
             final Header correlationId = headers.lastHeader("zilla:correlation-id");
+
             final Headers newResponseHeaders = new RecordHeaders();
             newResponseHeaders.add(correlationId);
-            final Headers paymentRequestsRecordHeaders = new RecordHeaders();;
+
+            final Headers paymentRequestsRecordHeaders = new RecordHeaders();
             paymentRequestsRecordHeaders.add(new RecordHeader("content-type", "application/json".getBytes()));
-            paymentRequestsRecordHeaders.add(new RecordHeader("userId", requestCommand.getUserId().getBytes()));
+            paymentRequestsRecordHeaders.add(new RecordHeader("user-id", requestCommand.getUserId().getBytes()));
 
             newResponseHeaders.add(":status", "200".getBytes());
             final Record reply = record.withHeaders(newResponseHeaders).withValue(Strings.EMPTY);

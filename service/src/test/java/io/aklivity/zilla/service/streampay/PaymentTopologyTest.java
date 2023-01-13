@@ -3,13 +3,8 @@
  */
 package io.aklivity.zilla.service.streampay;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
 import java.util.Properties;
 
-import io.aklivity.zilla.service.streampay.model.Command;
-import io.aklivity.zilla.service.streampay.model.PayCommand;
 import org.apache.kafka.common.header.Header;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;
@@ -27,6 +22,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.kafka.support.serializer.JsonSerde;
 import org.springframework.kafka.support.serializer.JsonSerializer;
+
+import io.aklivity.zilla.service.streampay.model.Command;
+import io.aklivity.zilla.service.streampay.model.PayCommand;
 
 public class PaymentTopologyTest
 {
@@ -74,7 +72,7 @@ public class PaymentTopologyTest
         final Headers headers = new RecordHeaders(
             new Header[]{
                 new RecordHeader("zilla:domain-model", "PayCommand".getBytes()),
-                new RecordHeader("userId", "user1".getBytes()),
+                new RecordHeader("user-id", "user1".getBytes()),
                 new RecordHeader("zilla:correlation-id", "1".getBytes()),
                 new RecordHeader("idempotency-key", "pay1".getBytes()),
                 new RecordHeader(":path", "/pay".getBytes())

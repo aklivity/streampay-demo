@@ -1,11 +1,14 @@
+/*
+ * Copyright 2021-2022 Aklivity. All rights reserved.
+ */
 package io.aklivity.zilla.service.streampay.model;
+
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.UUID;
 
 @NoArgsConstructor
 @AllArgsConstructor

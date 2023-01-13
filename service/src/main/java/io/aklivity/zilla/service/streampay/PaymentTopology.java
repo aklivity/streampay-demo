@@ -3,7 +3,6 @@
  */
 package io.aklivity.zilla.service.streampay;
 
-import io.aklivity.zilla.service.streampay.processor.ProcessTransactionSupplier;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -17,6 +16,7 @@ import org.springframework.stereotype.Component;
 import io.aklivity.zilla.service.streampay.model.Command;
 import io.aklivity.zilla.service.streampay.model.PaymentRequest;
 import io.aklivity.zilla.service.streampay.model.Transaction;
+import io.aklivity.zilla.service.streampay.processor.ProcessTransactionSupplier;
 import io.aklivity.zilla.service.streampay.processor.ProcessValidCommandSupplier;
 import io.aklivity.zilla.service.streampay.processor.RejectInvalidCommandSupplier;
 import io.aklivity.zilla.service.streampay.processor.ValidateCommandSupplier;
@@ -32,15 +32,15 @@ public class PaymentTopology
     private final Serde<PaymentRequest> paymentRequestSerde = SerdeFactory.jsonSerdeFor(PaymentRequest.class, false);
     private final Serde<Transaction> transactionSerde = SerdeFactory.jsonSerdeFor(Transaction.class, false);
 
-    @Value("${commands.topic}")
+    @Value("${commands.topic:commands}")
     String commandsTopic;
-    @Value("${command.replies.topic}")
+    @Value("${command.replies.topic:replies}")
     String commandRepliesTopic;
-    @Value("${payment.requests.topic}")
+    @Value("${payment.requests.topic:payment-requests}")
     String paymentRequestsTopic;
     @Value("${balances.topic:balances}")
     String balancesTopic;
-    @Value("${transactions.topic}")
+    @Value("${transactions.topic:transactions}")
     String transactionsTopic;
 
     private final String balanceStoreName = "Balance";

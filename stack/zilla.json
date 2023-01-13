@@ -1,0 +1,282 @@
+{
+  "name": "Example",
+  "vaults": {},
+  "bindings": {
+    "tcp_server4ee61c88-61e6-4676-a420-4ff918b0c534": {
+      "type": "tcp",
+      "kind": "server",
+      "options": {
+        "host": "0.0.0.0",
+        "port": 8080
+      },
+      "exit": "http_server4ee61c88-61e6-4676-a420-4ff918b0c534"
+    },
+    "http_server4ee61c88-61e6-4676-a420-4ff918b0c534": {
+      "type": "http",
+      "kind": "server",
+      "options": {
+        "access-control": {
+          "policy": "cross-origin"
+        }
+      },
+      "routes": [
+        {
+          "when": [
+            {
+              "headers": {
+                ":method": "GET",
+                ":path": "/activities"
+              }
+            },
+            {
+              "headers": {
+                ":method": "GET",
+                ":path": "/payment-requests"
+              }
+            }
+          ],
+          "exit": "sse_server4ee61c88-61e6-4676-a420-4ff918b0c534"
+        },
+        {
+          "when": [
+            {
+              "headers": {
+                ":method": "POST",
+                ":path": "/pay"
+              }
+            },
+            {
+              "headers": {
+                ":method": "POST",
+                ":path": "/request"
+              }
+            },
+            {
+              "headers": {
+                ":method": "GET",
+                ":path": "/balances/*"
+              }
+            },
+            {
+              "headers": {
+                ":method": "PUT",
+                ":path": "/users/*"
+              }
+            },
+            {
+              "headers": {
+                ":method": "GET",
+                ":path": "/users/*"
+              }
+            },
+            {
+              "headers": {
+                ":method": "GET",
+                ":path": "/users"
+              }
+            }
+          ],
+          "exit": "http-kafka_proxy4ee61c88-61e6-4676-a420-4ff918b0c534"
+        }
+      ]
+    },
+    "sse_server4ee61c88-61e6-4676-a420-4ff918b0c534": {
+      "type": "sse",
+      "kind": "server",
+      "exit": "sse-kafka_proxy4ee61c88-61e6-4676-a420-4ff918b0c534"
+    },
+    "sse-kafka_proxy4ee61c88-61e6-4676-a420-4ff918b0c534": {
+      "type": "sse-kafka",
+      "kind": "proxy",
+      "routes": [
+        {
+          "when": [
+            {
+              "path": "/activities"
+            }
+          ],
+          "exit": "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
+          "with": {
+            "event": {
+              "id": "[\"${base64(key)}\",\"${etag}\"]"
+            },
+            "topic": "activities"
+          }
+        },
+        {
+          "when": [
+            {
+              "path": "/payment-requests"
+            }
+          ],
+          "exit": "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
+          "with": {
+            "event": {
+              "id": "[\"${base64(key)}\",\"${etag}\"]"
+            },
+            "topic": "payment-requests"
+          }
+        }
+      ]
+    },
+    "http-kafka_proxy4ee61c88-61e6-4676-a420-4ff918b0c534": {
+      "type": "http-kafka",
+      "kind": "proxy",
+      "routes": [
+        {
+          "when": [
+            {
+              "method": "POST",
+              "path": "/pay"
+            }
+          ],
+          "exit": "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
+          "with": {
+            "capability": "produce",
+            "reply-to": "replies",
+            "topic": "commands",
+            "key": "${idempotencyKey}",
+            "overrides": {
+              "zilla:domain-model": "PayCommand",
+              "user-id": "user1"
+            }
+          }
+        },
+        {
+          "when": [
+            {
+              "method": "POST",
+              "path": "/request"
+            }
+          ],
+          "exit": "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
+          "with": {
+            "capability": "produce",
+            "reply-to": "replies",
+            "topic": "commands",
+            "key": "${idempotencyKey}",
+            "overrides": {
+              "zilla:domain-model": "RequestCommand",
+              "user-id": "user1"
+            }
+          }
+        },
+        {
+          "when": [
+            {
+              "method": "GET",
+              "path": "/balances/{id}"
+            }
+          ],
+          "exit": "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
+          "with": {
+            "capability": "fetch",
+            "topic": "balances",
+            "filters": [
+              {
+                "key": "${params.id}"
+              }
+            ]
+          }
+        },
+        {
+          "when": [
+            {
+              "method": "PUT",
+              "path": "/users/{id}"
+            }
+          ],
+          "exit": "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
+          "with": {
+            "capability": "produce",
+            "topic": "users",
+            "key": "${params.id}",
+            "overrides": {}
+          }
+        },
+        {
+          "when": [
+            {
+              "method": "GET",
+              "path": "/users/{id}"
+            }
+          ],
+          "exit": "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
+          "with": {
+            "capability": "fetch",
+            "topic": "users",
+            "filters": [
+              {
+                "key": "${params.id}"
+              }
+            ]
+          }
+        },
+        {
+          "when": [
+            {
+              "method": "GET",
+              "path": "/users"
+            }
+          ],
+          "exit": "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
+          "with": {
+            "capability": "fetch",
+            "topic": "users",
+            "merge": {
+              "content-type": "application/json"
+            }
+          }
+        }
+      ]
+    },
+    "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3": {
+      "type": "kafka",
+      "kind": "cache_client",
+      "exit": "kafka_cache_server98d198b7-b232-41c8-ad3e-56310f7b9ec3"
+    },
+    "kafka_cache_server98d198b7-b232-41c8-ad3e-56310f7b9ec3": {
+      "type": "kafka",
+      "kind": "cache_server",
+      "options": {
+        "bootstrap": [
+          "replies",
+          "balances",
+          "users",
+          "payment-requests"
+        ]
+      },
+      "exit": "kafka_client98d198b7-b232-41c8-ad3e-56310f7b9ec3"
+    },
+    "kafka_client98d198b7-b232-41c8-ad3e-56310f7b9ec3": {
+      "type": "kafka",
+      "kind": "client",
+      "exit": "tcp_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
+      "options": {
+        "sasl": {
+          "mechanism": "scram-sha-256",
+          "username": "user",
+          "password": "redpanda"
+        }
+      }
+    },
+    "tcp_client98d198b7-b232-41c8-ad3e-56310f7b9ec3": {
+      "type": "tcp",
+      "kind": "client",
+      "options": {
+        "host": "redpanda.internal.net",
+        "port": 29092
+      },
+      "routes": [
+        {
+          "when": [
+            {
+              "cidr": "0.0.0.0/0"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "guards": {}
+}
