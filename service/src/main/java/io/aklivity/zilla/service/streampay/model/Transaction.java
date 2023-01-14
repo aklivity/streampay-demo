@@ -3,6 +3,7 @@
  */
 package io.aklivity.zilla.service.streampay.model;
 
+import java.util.Date;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
@@ -18,5 +19,6 @@ public class Transaction
 {
     UUID id;
     double amount;
-    long timestamp;
+    Date date;
+    String userId;
 }

@@ -3,6 +3,8 @@
  */
 package io.aklivity.zilla.service.streampay.model;
 
+import java.util.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,5 +19,5 @@ public class PaymentRequest
     String userId;
     double amount;
     String notes;
-
+    Date date;
 }
