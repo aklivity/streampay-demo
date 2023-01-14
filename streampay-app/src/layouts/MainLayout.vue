@@ -1,7 +1,6 @@
 <template>
   <q-layout view="lHh Lpr lFf" style="min-width: 400px">
     <q-drawer
-      v-model="drawer"
       show-if-above
       :width="300"
       :breakpoint="500"
@@ -35,22 +34,26 @@
 
       <div style="margin-top: 40px; padding-left: 20px; padding-right: 20px;">
         <div class="text-h6">
-          $0.00 in StreamPay
-        </div>
-        <div class="text-weight-bold text-subtitle1">
-          Transfer Money
+          <b>${{ balance }}</b> in StreamPay
         </div>
       </div>
 
       <q-list class="text-h6" style="margin-top: 20px;">
-        <q-item clickable v-ripple>
+        <q-item
+          clickable
+          v-ripple
+          @click="this.$router.push({ path: '/request' })"
+        >
           <q-item-section avatar>
-            <q-icon size="36px" color="primary" name="notifications" />
+            <q-icon size="36px" color="primary" name="request_quote" />
           </q-item-section>
 
-          <q-item-section>Notification</q-item-section>
+          <q-item-section>
+              <div>Requests <q-badge rounded color="red" :label="requests" /></div>
+          </q-item-section>
         </q-item>
 
+        <!--
         <q-item clickable v-ripple>
           <q-item-section avatar>
             <q-icon size="36px" color="primary" name="analytics" />
@@ -58,6 +61,7 @@
 
           <q-item-section>Statement</q-item-section>
         </q-item>
+        -->
       </q-list>
 
       <div class="absolute-bottom text-weight-bold" style="padding-left: 80px; padding-right: 80px; margin-bottom: 30px;">
@@ -82,35 +86,48 @@
 import { defineComponent, ref } from 'vue';
 import {useAuth0} from '@auth0/auth0-vue';
 import jwt_decode from 'jwt-decode'
+import {api, streamingUrl} from "boot/axios";
+import {Buffer} from "buffer";
 
 export default defineComponent({
   name: 'MainLayout',
 
   setup () {
     const auth0 = useAuth0();
+    const balance = ref(0);
+    const requests = ref(0);
+
+    api.get('/balances/user1')
+      .then((response) => {
+        balance.value = response.data.balance;
+      })
+      .catch(() => {
+        balance.value = 0;
+      });
+
+    const requestStream = new EventSource(streamingUrl + "/payment-requests");
+
+    requestStream.addEventListener('delete', (event: MessageEvent) => {
+      let currentRequests = requests.value;
+      currentRequests--;
+      requests.value = currentRequests < 0 ? 0 : currentRequests;
+    }, false);
+
+    requestStream.onmessage = function (event: MessageEvent) {
+      requests.value++;
+    };
+
     return {
-      auth0: auth0,
+      auth0,
       isAuthenticated: auth0.isAuthenticated,
       isLoading: auth0.isLoading,
       user: auth0.user,
-      drawer: ref(false),
+      balance,
+      requests
     }
   },
   methods: {
-    async logout() {
-      const accessToken = await this.auth0.getAccessTokenSilently();
-      const decodedToken = jwt_decode(accessToken) as string;
-      const userId = decodedToken.split("|")[1];
-      const userInfo = this.auth0.user.value;
-      const status = "offline";
-
-      const currentUser = {
-        id: `${userId}`,
-        username: userInfo.nickname,
-        name: userInfo.name,
-        status: status
-      };
-
+     logout() {
       this.auth0.logout({
         returnTo: window.location.origin
       });

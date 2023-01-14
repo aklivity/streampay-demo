@@ -1,7 +1,7 @@
 <template>
   <div style="margin-left: 12%; margin-right: 12%; margin-top: 40px;">
     <div class="text-center text-primary text-h4" style="margin: 20px 35% 40px 30%;">
-      $ {{ balance }}
+      ${{ balance }}
     </div>
     <q-form
       @submit="onPay"
@@ -14,8 +14,13 @@
         label="To"
         use-input
         outlined
-        v-model="user"
+        v-model="userOption"
         :options="userOptions"
+        :rules="[
+           (val) =>
+              (val && val.value.length > 0) ||
+              'Please select user',
+        ]"
       />
 
       <q-input
@@ -24,6 +29,10 @@
         v-model="amount"
         lazy-rules
         outlined
+        :rules="[
+          (val) =>
+            (val && val > 0) || 'Required field and should be more than $0.',
+        ]"
       />
 
       <q-input
@@ -43,7 +52,7 @@
 </template>
 
 <script>
-import {defineComponent, ref} from 'vue'
+import {defineComponent, ref, toRefs} from 'vue'
 import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import {useRouter} from "vue-router";
@@ -51,10 +60,56 @@ import {v4} from "uuid";
 
 export default defineComponent({
   name: 'PayOrRequestForm',
-  setup () {
+  props: {
+    requestId: {
+      type: String
+    }
+  },
+  setup (props) {
     const $q = useQuasar()
+    const { requestId } = toRefs(props);
+
     const balance = ref(0);
+    const userOption = ref(null);
+    const userOptions = ref([]);
+    const amount = ref(0);
+    const notes = ref("");
     const router = useRouter();
+
+    if (requestId.value) {
+      api.get('/payment-requests/' + requestId.value)
+        .then((response) => {
+          const request = response.data;
+          amount.value = request.amount;
+
+          api.get('/users/' + request.userId)
+            .then((response) => {
+              const user = response.data;
+
+              const newUserOption = {
+                label: user.name,
+                value: user.id
+              };
+              userOption.value = newUserOption;
+              userOptions.value.push(newUserOption);
+            });
+        })
+    } else {
+      api.get('/users')
+        .then((response) => {
+          const users = response.data;
+          for(let user of users) {
+            if (user.id != 'user1') {
+              const newUserOption = {
+                label: user.name,
+                value: user.id
+              };
+              userOptions.value.push(newUserOption);
+            }
+          }
+        });
+    }
+
     api.get('/balances/user1')
       .then((response) => {
         balance.value = response.data.balance;
@@ -63,37 +118,19 @@ export default defineComponent({
         balance.value = 0;
       });
 
-    const user = ref(null);
-    const userOptions = ref([]);
-    api.get('/users')
-      .then((response) => {
-        const users = response.data;
-        for(let user of users) {
-          if (user.id != 'user1') {
-            userOptions.value.push(
-              {
-                label: user.name,
-                value: user.id
-              }
-            );
-          }
-        }
-      });
-    const amount = ref(0);
-    const notes = ref("");
-
     return {
       balance,
-      user,
+      userOption,
       userOptions,
       amount,
       notes,
       onPay () {
         if (balance.value - amount.value > 0) {
           api.post('/pay', {
-            userId: user.value.value,
+            userId: userOption.value.value,
             amount: amount.value,
-            notes: notes.value
+            notes: notes.value,
+            requestId: requestId.value
           },{
             headers: {
               'Idempotency-Key': v4()
@@ -121,7 +158,7 @@ export default defineComponent({
       },
       onRequest () {
         api.post('/request', {
-          userId: user.value.value,
+          userId: userOption.value.value,
           amount: amount.value,
           notes: notes.value
         },{

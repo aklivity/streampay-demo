@@ -74,6 +74,12 @@
                 ":method": "GET",
                 ":path": "/users"
               }
+            },
+            {
+              "headers": {
+                ":method": "GET",
+                ":path": "/payment-requests/*"
+              }
             }
           ],
           "exit": "http-kafka_proxy4ee61c88-61e6-4676-a420-4ff918b0c534"
@@ -226,6 +232,24 @@
             "merge": {
               "content-type": "application/json"
             }
+          }
+        },
+        {
+          "when": [
+            {
+              "method": "GET",
+              "path": "/payment-requests/{id}"
+            }
+          ],
+          "exit": "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
+          "with": {
+            "capability": "fetch",
+            "topic": "payment-requests",
+            "filters": [
+              {
+                "key": "${params.id}"
+              }
+            ]
           }
         }
       ]

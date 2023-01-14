@@ -17,4 +17,5 @@ public class PayCommand implements Command
     private String userId;
     private double amount;
     private String notes;
+    private String requestId;
 }

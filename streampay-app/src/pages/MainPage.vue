@@ -20,11 +20,8 @@
        <template v-slot:body="props">
          <q-tr :props="props" no-hover>
            <q-td  key="transaction" :props="props">
-             <q-avatar>
-               <img src="https://cdn.quasar.dev/img/avatar.png">
-             </q-avatar>
              <div>
-               <b>You</b> paid <b>Somebody</b>
+               <b>You</b> requested to p <b>Somebody</b>
              </div>
              <div class="text-subtitle2">
                Jul 1, 2022
@@ -58,7 +55,7 @@ export default defineComponent({
 
     const columns = [
       {
-        name: 'transaction',
+        name: 'requests',
         required: true,
         align: 'left',
         field: 'transaction',
@@ -88,7 +85,6 @@ export default defineComponent({
     for (let i = 0; i < 1; i++) {
       rows = rows.concat(seed.map((r, j) => ({ ...r, index: i * seedSize + j + 1 })))
     }
-
 
     return {
       auth0: auth0,

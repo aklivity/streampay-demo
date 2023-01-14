@@ -137,6 +137,16 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
 
                 context.forward(depositTransaction, transactionName);
 
+                if (payCommand.getRequestId() != null)
+                {
+                    final Headers paymentRequestsRecordHeaders = new RecordHeaders();
+                    paymentRequestsRecordHeaders.add(userId);
+
+                    final Record paymentRequest = new Record(payCommand.getRequestId(),
+                        null, record.timestamp(), paymentRequestsRecordHeaders);
+                    context.forward(paymentRequest, paymentRequestsName);
+                }
+
                 newResponseHeaders.add(":status", "200".getBytes());
                 final Record reply = record.withHeaders(newResponseHeaders).withValue(Strings.EMPTY);
                 context.forward(reply, replyTo);

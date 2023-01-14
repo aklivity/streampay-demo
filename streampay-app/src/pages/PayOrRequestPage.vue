@@ -3,16 +3,24 @@
     <div class="text-center text-primary text-h5" style="margin-left: 35%; margin-right: 35%; margin-top: 20px;">
       Pay & Request
     </div>
-    <PayOrRequestForm />
+    <PayOrRequestForm :request-id="requestId" />
   </q-page>
 </template>
 
 <script lang="ts">
 import {defineComponent} from "vue";
 import PayOrRequestForm from "components/PayOrRequestForm.vue";
+import {useRoute} from "vue-router";
 
 export default defineComponent({
   name: 'PayOrRequestPage',
-  components: { PayOrRequestForm }
+  components: { PayOrRequestForm },
+  setup() {
+    const route = useRoute();
+    const requestId = route.params.requestId;
+    return {
+      requestId
+    };
+  },
 })
 </script>
