@@ -3,13 +3,10 @@
  */
 package io.aklivity.zilla.service.streampay.model;
 
-import java.util.Date;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,5 +17,5 @@ public class Event
     String eventName;
     double amount;
     String userId;
-    Date date;
+    long timestamp;
 }

@@ -9,7 +9,7 @@
       hide-bottom
       hide-header
       card-style="box-shadow: none;"
-      :rows="rows"
+      :rows="activities"
       :columns="columns"
       :table-colspan="9"
       row-key="index"
@@ -19,12 +19,15 @@
     >
        <template v-slot:body="props">
          <q-tr :props="props" no-hover>
-           <q-td  key="transaction" :props="props">
-             <div>
-               <b>You</b> requested to p <b>Somebody</b>
+           <q-td  key="avatar" :props="props" style="width: 50px">
+             <q-avatar color="primary" text-color="white">U</q-avatar>
+           </q-td>
+           <q-td  key="activities" :props="props">
+             <div class="text-h6">
+               <b>{{ props.row.from}}</b> {{ props.row.state }} <b>{{ props.row.to}}</b>
              </div>
              <div class="text-subtitle2">
-               Jul 1, 2022
+               {{ props.row.date }}
              </div>
            </q-td>
 
@@ -32,7 +35,7 @@
              key="amount"
              :props="props"
            >
-             <div class="text-negative">
+             <div>
              {{ props.row.amount }}
              </div>
            </q-td>
@@ -45,6 +48,7 @@
 <script lang="ts">
 import {defineComponent, ref} from 'vue';
 import {useAuth0} from "@auth0/auth0-vue";
+import {streamingUrl} from "boot/axios";
 
 export default defineComponent({
   name: 'MainPage',
@@ -54,44 +58,55 @@ export default defineComponent({
     const tableRef = ref(null);
 
     const columns = [
+      { name: 'avatar', align: 'left', field: 'avatar'},
       {
-        name: 'requests',
+        name: 'activities',
         required: true,
         align: 'left',
-        field: 'transaction',
+        field: 'activities',
         format: (val: any) => `${val}`
       },
-      { name: 'amount', align: 'right', field: 'amount', sortable: true },
+      { name: 'amount', align: 'right', field: 'amount'},
     ]
 
-    const seed = [
-      {
-        transaction: 'Frozen Yogurt',
-        amount: "-$159"
-      },
-      {
-        transaction: 'Ice cream sandwich',
-        amount: "-$237"
-      },
-      {
-        transaction: 'Eclair',
-        amount: "-$262"
+    const activities = ref([] as any);
+
+    const activitiesStream = new EventSource(streamingUrl + "/activities");
+
+    activitiesStream.onmessage = function (event: MessageEvent) {
+      const activity = JSON.parse(event.data);
+      let from = '';
+      let to = '';
+      let state = '';
+
+      if (activity.eventName == "PaymentSent") {
+        from = 'You';
+        state = 'paid';
+        to = activity.userId
+      } else if (activity.eventName == "PaymentReceived") {
+        from = activity.userId;
+        state = 'paid';
+        to = 'you'
+      } else if (activity.eventName == "PaymentRequested") {
+        from = activity.userId;
+        state = 'requested';
+        to = 'you'
       }
-    ]
-
-    const seedSize = seed.length
-
-    let rows = [] as any;
-    for (let i = 0; i < 1; i++) {
-      rows = rows.concat(seed.map((r, j) => ({ ...r, index: i * seedSize + j + 1 })))
-    }
+      activities.value.push({
+        from,
+        to,
+        state,
+        amount: activity.amount,
+        date: new Date (activity.timestamp)
+      })
+    };
 
     return {
       auth0: auth0,
       tableRef,
 
       columns,
-      rows,
+      activities,
 
       pagination: {
         rowsPerPage: 0

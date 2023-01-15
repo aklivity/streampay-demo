@@ -3,6 +3,8 @@
  */
 package io.aklivity.zilla.service.streampay;
 
+import java.time.Instant;
+
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KeyValue;
@@ -19,7 +21,7 @@ import io.aklivity.zilla.service.streampay.model.Transaction;
 import io.aklivity.zilla.service.streampay.serde.SerdeFactory;
 
 @Component
-public class ActivitiesTopology
+public class StatsTopology
 {
     private final Serde<String> stringSerde = Serdes.String();
     private final Serde<PaymentRequest> paymentRequestSerde = SerdeFactory.jsonSerdeFor(PaymentRequest.class, false);
@@ -36,33 +38,32 @@ public class ActivitiesTopology
     @Value("${activities.topic:activities}")
     String activitiesTopic;
 
-    public ActivitiesTopology()
+    public StatsTopology()
     {
     }
 
     @Autowired
-    public void buildPipeline(StreamsBuilder streamsBuilder)
+    public void buildPipeline(StreamsBuilder satsKafkaStreamsBuilder)
     {
-        streamsBuilder.stream(transactionsTopic,
+        satsKafkaStreamsBuilder.stream(transactionsTopic,
             Consumed.with(stringSerde, transactionSerde))
             .map((key, value) ->
                 new KeyValue<>(key, Event.builder()
                     .eventName(value.getAmount() < 0 ? "PaymentSent" : "PaymentReceived")
                     .amount(value.getAmount())
-                    .date(value.getDate())
+                    .timestamp(Instant.now().toEpochMilli())
                     .userId(value.getUserId())
                     .build()))
             .to(activitiesTopic, Produced.with(stringSerde, eventSerde));
 
-        streamsBuilder.stream(paymentRequestsTopic,
+        satsKafkaStreamsBuilder.stream(paymentRequestsTopic,
                 Consumed.with(stringSerde, paymentRequestSerde))
             .map((key, value) ->
                 new KeyValue<>(key, Event.builder()
                     .eventName("PaymentRequested")
                     .amount(value.getAmount())
-                    .date(value.getDate())
+                    .timestamp(Instant.now().toEpochMilli())
                     .userId(value.getUserId())
-                    .date(value.getDate())
                     .build()))
             .to(activitiesTopic, Produced.with(stringSerde, eventSerde));
     }

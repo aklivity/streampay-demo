@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.time.Instant;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
@@ -102,7 +101,7 @@ public class PaymentTopologyTest
 
         transactionsInTopic.pipeInput(new TestRecord<>("user1", Transaction.builder()
             .amount(123)
-            .date(Date.from(Instant.now()))
+            .timestamp(Instant.now().toEpochMilli())
             .build()));
 
         commandsInTopic.pipeInput(new TestRecord<>("pay1", PayCommand.builder()

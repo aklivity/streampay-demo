@@ -3,8 +3,6 @@
  */
 package io.aklivity.zilla.service.streampay.processor;
 
-import java.time.Instant;
-import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
@@ -123,7 +121,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
                     Transaction.builder()
                         .id(UUID.randomUUID())
                         .amount(-payCommand.getAmount())
-                        .date(Date.from(Instant.now()))
+                        .timestamp(record.timestamp())
                         .userId(payCommand.getUserId())
                         .build(),
                     record.timestamp(), transactionRecordHeaders);
@@ -134,7 +132,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
                     Transaction.builder()
                         .id(UUID.randomUUID())
                         .amount(payCommand.getAmount())
-                        .date(Date.from(Instant.now()))
+                        .timestamp(record.timestamp())
                         .userId(userIdValue)
                         .build(),
                     record.timestamp(), transactionRecordHeaders);
@@ -185,7 +183,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
                     .userId(new String(userId.value()))
                     .amount(requestCommand.getAmount())
                     .notes(requestCommand.getNotes())
-                    .date(Date.from(Instant.now()))
+                    .timestamp(record.timestamp())
                     .build(),
                 record.timestamp(),
                 paymentRequestsRecordHeaders);

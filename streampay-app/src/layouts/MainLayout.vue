@@ -7,10 +7,15 @@
       bordered
     >
       <div class="absolute-top"  style="height: 150px; margin-top: 15px;">
-        <div class="absolute-top">
-          <div class="text-weight-bold text-h3 text-primary" style="margin-left: 10px;">StreamPay</div>
+        <div class="absolute-top" style="margin-bottom: 50px;">
+          <q-btn
+            class="text-weight-bold text-h4"
+            flat color="primary"
+            label="StreamPay"
+            @click="this.$router.push({ path: '/main' })"
+          />
         </div>
-        <div class="absolute-bottom" style="margin-top: 20px">
+        <div style="margin-top: 100px">
           <q-avatar size="60px" class="q-mb-sm" style="margin-left: 10px">
             <img :src="user.picture">
           </q-avatar>
@@ -20,7 +25,7 @@
         </div>
       </div>
 
-      <div style="margin-top: 200px; padding-left: 20px; padding-right: 20px;">
+      <div style="margin-top: 240px; padding-left: 20px; padding-right: 20px;">
         <q-btn
           unelevated
           size="lg"

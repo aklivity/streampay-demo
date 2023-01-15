@@ -62,7 +62,7 @@ public class PaymentTopology
     }
 
     @Autowired
-    public void buildPipeline(StreamsBuilder streamsBuilder)
+    public void buildPipeline(StreamsBuilder paymentKafkaStreamsBuilder)
     {
         // create store
         final StoreBuilder balanceStoreBuilder = Stores.keyValueStoreBuilder(
@@ -75,7 +75,7 @@ public class PaymentTopology
             bytesSerde,
             bytesSerde);
 
-        final Topology topologyBuilder = streamsBuilder.build();
+        final Topology topologyBuilder = paymentKafkaStreamsBuilder.build();
         topologyBuilder.addSource(commandsSource, stringSerde.deserializer(), commandSerde.deserializer(), commandsTopic)
             .addProcessor(validateCommand, new ValidateCommandSupplier(
                 idempotencyKeyStoreName, processValidCommand, rejectInvalidCommand), commandsSource)
