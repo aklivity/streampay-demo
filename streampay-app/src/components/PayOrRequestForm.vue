@@ -51,13 +51,18 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import {defineComponent, ref, toRefs} from 'vue'
-import {api} from "boot/axios";
+import {api, streamingUrl} from "boot/axios";
 import {useQuasar} from "quasar";
 import {useRouter} from "vue-router";
 import {v4} from "uuid";
 import {useAuth0} from "@auth0/auth0-vue";
+
+interface UserOption {
+  label: string;
+  value: string;
+}
 
 export default defineComponent({
   name: 'PayOrRequestForm',
@@ -70,12 +75,11 @@ export default defineComponent({
     const $q = useQuasar()
     const auth0 = useAuth0();
     const { requestId } = toRefs(props);
-
-    const balance = ref(0);
-    const userOption = ref(null);
-    const userOptions = ref([]);
-    const amount = ref(0);
-    const notes = ref("");
+    const balance = ref(0 as number);
+    const userOption = ref(null as UserOption | null);
+    const userOptions = ref([] as UserOption[]);
+    const amount = ref(0 as number);
+    const notes = ref("" as string);
     const router = useRouter();
 
     return {
@@ -92,7 +96,7 @@ export default defineComponent({
           const accessToken = await auth0.getAccessTokenSilently();
           const authorization = { Authorization: `Bearer ${accessToken}` };
           api.post('/pay', {
-            userId: userOption.value.value,
+            userId: userOption.value?.value,
             amount: amount.value,
             notes: notes.value,
             requestId: requestId.value
@@ -126,7 +130,7 @@ export default defineComponent({
         const accessToken = await auth0.getAccessTokenSilently();
         const authorization = { Authorization: `Bearer ${accessToken}` };
         api.post('/request', {
-          userId: userOption.value.value,
+          userId: userOption.value?.value,
           amount: amount.value,
           notes: notes.value
         },{
@@ -151,6 +155,14 @@ export default defineComponent({
   async mounted() {
     const accessToken = await this.auth0.getAccessTokenSilently();
     const authorization = { Authorization: `Bearer ${accessToken}` };
+    const updateBalance = this.updateBalance;
+
+    const balanceStream = new EventSource(`${streamingUrl}/balances?access_token=${accessToken}`);
+
+    balanceStream.onmessage = function (event: MessageEvent) {
+      const balance = JSON.parse(event.data);
+      updateBalance(balance.balance);
+    };
 
     if (this.formRequestId) {
       api.get('/payment-requests/' + this.formRequestId,{
@@ -160,7 +172,7 @@ export default defineComponent({
         })
         .then((response) => {
           const request = response.data;
-          this.amount.value = request.amount;
+          this.amount = request.amount;
 
           api.get('/users/' + this.user.sub)
             .then((response) => {
@@ -170,8 +182,8 @@ export default defineComponent({
                 label: user.name,
                 value: user.id
               };
-              this.userOption.value = newUserOption;
-              this.userOptions.value.push(newUserOption);
+              this.userOption = newUserOption;
+              this.userOptions.push(newUserOption);
             });
         })
     } else {
@@ -188,10 +200,15 @@ export default defineComponent({
                 label: user.name,
                 value: user.id
               };
-              this.userOptions.push(newUserOption);
+              this.userOptions.push(newUserOption as any);
             }
           }
         });
+    }
+  },
+  methods: {
+    updateBalance(newBalance: number) {
+      this.balance = newBalance;
     }
   }
 })

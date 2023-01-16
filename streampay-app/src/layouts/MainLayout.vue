@@ -112,6 +112,7 @@ export default defineComponent({
     const accessToken = await this.auth0.getAccessTokenSilently();
     const incRequests =  this.incRequest;
     const decRequests =  this.decRequests;
+    const updateBalance =  this.updateBalance;
 
     const requestStream = new EventSource(`${streamingUrl}/payment-requests?access_token=${accessToken}`);
 
@@ -121,6 +122,13 @@ export default defineComponent({
 
     requestStream.onmessage = function () {
       incRequests();
+    };
+
+    const balanceStream = new EventSource(`${streamingUrl}/balances?access_token=${accessToken}`);
+
+    balanceStream.onmessage = function (event: MessageEvent) {
+      const balance = JSON.parse(event.data);
+      updateBalance(balance.balance);
     };
   },
   methods: {
@@ -136,6 +144,9 @@ export default defineComponent({
       let currentRequests = this.request;
       currentRequests--;
       this.request = currentRequests < 0 ? 0 : currentRequests;
+    },
+    updateBalance(newBalance: number) {
+      this.balance = newBalance;
     }
   }
 });
