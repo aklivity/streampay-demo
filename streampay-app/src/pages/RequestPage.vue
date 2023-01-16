@@ -49,10 +49,11 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, ref} from 'vue';
+import {defineComponent, ref, unref} from 'vue';
 import {useAuth0} from "@auth0/auth0-vue";
 import {streamingUrl} from "boot/axios";
 import {Buffer} from "buffer";
+import {watchEffectOnceAsync} from "@auth0/auth0-vue/src/utils";
 
 export default defineComponent({
   name: 'MainPage',

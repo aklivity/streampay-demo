@@ -88,9 +88,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import {defineComponent, ref, unref} from 'vue';
 import {useAuth0} from '@auth0/auth0-vue';
 import {api, streamingUrl} from "boot/axios";
+import {watchEffectOnceAsync} from "@auth0/auth0-vue/src/utils";
 
 export default defineComponent({
   name: 'MainLayout',
@@ -148,6 +149,28 @@ export default defineComponent({
     updateBalance(newBalance: number) {
       this.balance = newBalance;
     }
+  },
+  async beforeCreate() {
+    const fn = async () => {
+      if (unref(this.auth0.isAuthenticated)) {
+        return true;
+      }
+
+      await this.auth0.loginWithRedirect({
+        appState: { target: "/" }
+      });
+
+      return false;
+    };
+
+    if (!unref(this.auth0.isLoading)) {
+      return fn();
+    }
+
+    await watchEffectOnceAsync(() => !unref(this.auth0.isLoading));
+
+    return fn();
   }
+
 });
 </script>

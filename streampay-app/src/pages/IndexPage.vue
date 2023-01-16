@@ -41,8 +41,9 @@
 </template>
 
 <script lang="ts">
-import {defineComponent} from 'vue';
-import {useAuth0} from "@auth0/auth0-vue";
+import {defineComponent, unref} from 'vue';
+import { useAuth0 } from "@auth0/auth0-vue";
+import {watchEffectOnceAsync} from "@auth0/auth0-vue/src/utils";
 
 export default defineComponent({
   name: 'IndexPage',
@@ -51,6 +52,25 @@ export default defineComponent({
     return {
       auth0: auth0
     }
+  },
+  async beforeCreate() {
+    const fn = async () => {
+      if (unref(!this.auth0.isAuthenticated)) {
+        return true;
+      }
+
+      this.$router.push({ path: '/main' });
+
+      return false;
+    };
+
+    if (!unref(this.auth0.isLoading)) {
+      return fn();
+    }
+
+    await watchEffectOnceAsync(() => !unref(this.auth0.isLoading));
+
+    return fn();
   },
   methods: {
     login() {

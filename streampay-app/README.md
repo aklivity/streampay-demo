@@ -1,6 +1,6 @@
-# Quasar App (streampay-app)
+# StreamPay App (streampay-app)
 
-A Quasar Project
+StreamPay Project
 
 ## Install the dependencies
 ```bash
