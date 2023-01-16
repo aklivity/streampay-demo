@@ -74,31 +74,33 @@ export default defineComponent({
 
     const requests = ref([] as any);
 
-    const requestStream = new EventSource(streamingUrl + "/payment-requests");
+
+
+    return {
+      auth0: auth0,
+      tableRef,
+      columns,
+      requests
+    }
+  },
+  async mounted() {
+    const accessToken = await this.auth0.getAccessTokenSilently();
+    const requestStream = new EventSource(`${streamingUrl}/payment-requests?access_token=${accessToken}`);
+    const requests = this.requests;
 
     requestStream.addEventListener('delete', (event: MessageEvent) => {
-        const lastEventId = JSON.parse(event.lastEventId?.toString());
-        const key = Buffer.from(lastEventId[0], "base64").toString("utf8");
-        const index = requests.value.findIndex((r: { id: string; }) => r.id === key);
-        requests.value.splice(index, 1);
+      const lastEventId = JSON.parse(event.lastEventId?.toString());
+      const key = Buffer.from(lastEventId[0], "base64").toString("utf8");
+      const index = requests.findIndex((r: { id: string; }) => r.id === key);
+      requests.splice(index, 1);
     }, false);
 
     requestStream.onmessage = function (event: MessageEvent) {
       const lastEventId = JSON.parse(event.lastEventId);
       const key:string = Buffer.from(lastEventId[0], "base64").toString("utf8");
       const paymentRequest = JSON.parse(event.data)
-      requests.value.push({id: key, request: paymentRequest})
+      requests.push({id: key, request: paymentRequest})
     };
-
-    return {
-      auth0: auth0,
-      tableRef,
-      columns,
-      requests,
-      pagination: {
-        rowsPerPage: 0
-      }
-    }
   }
 });
 </script>

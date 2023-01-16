@@ -57,6 +57,7 @@ import {api} from "boot/axios";
 import {useQuasar} from "quasar";
 import {useRouter} from "vue-router";
 import {v4} from "uuid";
+import {useAuth0} from "@auth0/auth0-vue";
 
 export default defineComponent({
   name: 'PayOrRequestForm',
@@ -67,6 +68,7 @@ export default defineComponent({
   },
   setup (props) {
     const $q = useQuasar()
+    const auth0 = useAuth0();
     const { requestId } = toRefs(props);
 
     const balance = ref(0);
@@ -76,56 +78,19 @@ export default defineComponent({
     const notes = ref("");
     const router = useRouter();
 
-    if (requestId.value) {
-      api.get('/payment-requests/' + requestId.value)
-        .then((response) => {
-          const request = response.data;
-          amount.value = request.amount;
-
-          api.get('/users/' + request.userId)
-            .then((response) => {
-              const user = response.data;
-
-              const newUserOption = {
-                label: user.name,
-                value: user.id
-              };
-              userOption.value = newUserOption;
-              userOptions.value.push(newUserOption);
-            });
-        })
-    } else {
-      api.get('/users')
-        .then((response) => {
-          const users = response.data;
-          for(let user of users) {
-            if (user.id != 'user1') {
-              const newUserOption = {
-                label: user.name,
-                value: user.id
-              };
-              userOptions.value.push(newUserOption);
-            }
-          }
-        });
-    }
-
-    api.get('/balances/user1')
-      .then((response) => {
-        balance.value = response.data.balance;
-      })
-      .catch(() => {
-        balance.value = 0;
-      });
-
     return {
+      auth0,
+      user: auth0.user,
+      formRequestId: requestId,
       balance,
       userOption,
       userOptions,
       amount,
       notes,
-      onPay () {
+      async onPay () {
         if (balance.value - amount.value > 0) {
+          const accessToken = await auth0.getAccessTokenSilently();
+          const authorization = { Authorization: `Bearer ${accessToken}` };
           api.post('/pay', {
             userId: userOption.value.value,
             amount: amount.value,
@@ -133,7 +98,8 @@ export default defineComponent({
             requestId: requestId.value
           },{
             headers: {
-              'Idempotency-Key': v4()
+              'Idempotency-Key': v4(),
+              ...authorization
             }}).then(function () {
             router.push({ path: '/main' });
           })
@@ -156,14 +122,17 @@ export default defineComponent({
           });
         }
       },
-      onRequest () {
+      async onRequest () {
+        const accessToken = await auth0.getAccessTokenSilently();
+        const authorization = { Authorization: `Bearer ${accessToken}` };
         api.post('/request', {
           userId: userOption.value.value,
           amount: amount.value,
           notes: notes.value
         },{
           headers: {
-            'Idempotency-Key': v4()
+            'Idempotency-Key': v4(),
+            ...authorization
         }}).then(function () {
           router.push({ path: '/main' });
         })
@@ -177,6 +146,52 @@ export default defineComponent({
           });
         });
       }
+    }
+  },
+  async mounted() {
+    const accessToken = await this.auth0.getAccessTokenSilently();
+    const authorization = { Authorization: `Bearer ${accessToken}` };
+
+    if (this.formRequestId) {
+      api.get('/payment-requests/' + this.formRequestId,{
+          headers: {
+            ...authorization
+          }
+        })
+        .then((response) => {
+          const request = response.data;
+          this.amount.value = request.amount;
+
+          api.get('/users/' + this.user.sub)
+            .then((response) => {
+              const user = response.data;
+
+              const newUserOption = {
+                label: user.name,
+                value: user.id
+              };
+              this.userOption.value = newUserOption;
+              this.userOptions.value.push(newUserOption);
+            });
+        })
+    } else {
+      api.get('/users', {
+          headers: {
+            ...authorization
+          }
+        })
+        .then((response) => {
+          const users = response.data;
+          for(let user of users) {
+            if (user.id != this.user.sub) {
+              const newUserOption = {
+                label: user.name,
+                value: user.id
+              };
+              this.userOptions.push(newUserOption);
+            }
+          }
+        });
     }
   }
 })

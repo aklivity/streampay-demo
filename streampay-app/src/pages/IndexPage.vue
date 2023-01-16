@@ -41,7 +41,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, ref} from 'vue';
+import {defineComponent} from 'vue';
 import {useAuth0} from "@auth0/auth0-vue";
 
 export default defineComponent({

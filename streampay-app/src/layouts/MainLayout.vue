@@ -17,7 +17,7 @@
         </div>
         <div style="margin-top: 100px">
           <q-avatar size="60px" class="q-mb-sm" style="margin-left: 10px">
-            <img :src="user.picture">
+            <img :src="user.picture" referrerpolicy="no-referrer">
           </q-avatar>
           <div class="text-weight-bold float-right text-h6" style="padding-right: 10px; width: 222px; margin-top: 10px;">
             Hi, {{ user.name }}
@@ -54,7 +54,7 @@
           </q-item-section>
 
           <q-item-section>
-              <div>Requests <q-badge rounded color="red" :label="requests" /></div>
+              <div>Requests <q-badge rounded color="red" :label="request" /></div>
           </q-item-section>
         </q-item>
 
@@ -90,55 +90,52 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
 import {useAuth0} from '@auth0/auth0-vue';
-import jwt_decode from 'jwt-decode'
 import {api, streamingUrl} from "boot/axios";
-import {Buffer} from "buffer";
 
 export default defineComponent({
   name: 'MainLayout',
-
+  data() {
+    return {
+      request: 0,
+      balance: 0
+    }
+  },
   setup () {
     const auth0 = useAuth0();
-    const balance = ref(0);
-    const requests = ref(0);
-
-    api.get('/balances/user1')
-      .then((response) => {
-        balance.value = response.data.balance;
-      })
-      .catch(() => {
-        balance.value = 0;
-      });
-
-    const requestStream = new EventSource(streamingUrl + "/payment-requests");
-
-    requestStream.addEventListener('delete', (event: MessageEvent) => {
-      let currentRequests = requests.value;
-      currentRequests--;
-      requests.value = currentRequests < 0 ? 0 : currentRequests;
-    }, false);
-
-    requestStream.onmessage = function (event: MessageEvent) {
-      requests.value++;
-    };
 
     return {
       auth0,
-      isAuthenticated: auth0.isAuthenticated,
-      isLoading: auth0.isLoading,
-      user: auth0.user,
-      balance,
-      requests
+      user: auth0.user
     }
+  },
+  async mounted() {
+    const accessToken = await this.auth0.getAccessTokenSilently();
+    const incRequests =  this.incRequest;
+    const decRequests =  this.decRequests;
+
+    const requestStream = new EventSource(`${streamingUrl}/payment-requests?access_token=${accessToken}`);
+
+    requestStream.addEventListener('delete', (event: MessageEvent) => {
+      decRequests();
+    }, false);
+
+    requestStream.onmessage = function () {
+      incRequests();
+    };
   },
   methods: {
      logout() {
       this.auth0.logout({
-        returnTo: window.location.origin
+        returnTo: `${window.location.origin}/`
       });
     },
-    login() {
-      this.auth0.loginWithRedirect();
+    incRequest() {
+      this.request++
+    },
+    decRequests() {
+      let currentRequests = this.request;
+      currentRequests--;
+      this.request = currentRequests < 0 ? 0 : currentRequests;
     }
   }
 });

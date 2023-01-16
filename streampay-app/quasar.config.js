@@ -144,8 +144,8 @@ module.exports = configure(function (ctx) {
       // chainWebpackCustomSW (/* chain */) {},
 
       manifest: {
-        name: 'Quasar App',
-        short_name: 'Quasar App',
+        name: 'StreamPay',
+        short_name: 'StreamPay',
         description: '',
         display: 'standalone',
         orientation: 'portrait',

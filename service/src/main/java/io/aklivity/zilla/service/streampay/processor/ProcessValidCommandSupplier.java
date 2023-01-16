@@ -107,7 +107,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
         {
             final PayCommand payCommand = (PayCommand) record.value();
             final Headers headers = record.headers();
-            final Header userId = headers.lastHeader("user-id");
+            final Header userId = headers.lastHeader("zilla:identity");
             final Header correlationId = headers.lastHeader("zilla:correlation-id");
             final Headers newResponseHeaders = new RecordHeaders();
             newResponseHeaders.add(correlationId);
@@ -164,7 +164,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
         {
             final RequestCommand requestCommand = (RequestCommand) record.value();
             final Headers headers = record.headers();
-            final Header userId = headers.lastHeader("user-id");
+            final Header userId = headers.lastHeader("zilla:identity");
             final Header correlationId = headers.lastHeader("zilla:correlation-id");
 
             final Headers newResponseHeaders = new RecordHeaders();
@@ -172,7 +172,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
 
             final Headers paymentRequestsRecordHeaders = new RecordHeaders();
             paymentRequestsRecordHeaders.add(new RecordHeader("content-type", "application/json".getBytes()));
-            paymentRequestsRecordHeaders.add(new RecordHeader("user-id", requestCommand.getUserId().getBytes()));
+            paymentRequestsRecordHeaders.add(new RecordHeader("zilla:identity", requestCommand.getUserId().getBytes()));
 
             newResponseHeaders.add(":status", "200".getBytes());
             final Record reply = record.withHeaders(newResponseHeaders).withValue(Strings.EMPTY);

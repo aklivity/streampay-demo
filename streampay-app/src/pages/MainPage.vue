@@ -71,7 +71,20 @@ export default defineComponent({
 
     const activities = ref([] as any);
 
-    const activitiesStream = new EventSource(streamingUrl + "/activities");
+    return {
+      auth0,
+      tableRef,
+      columns,
+      activities,
+      pagination: {
+        rowsPerPage: 0
+      }
+    }
+  },
+  async mounted() {
+    const accessToken = await this.auth0.getAccessTokenSilently();
+    const activitiesStream = new EventSource(`${streamingUrl}/activities?access_token=${accessToken}`);
+    const activities = this.activities;
 
     activitiesStream.onmessage = function (event: MessageEvent) {
       const activity = JSON.parse(event.data);
@@ -79,20 +92,20 @@ export default defineComponent({
       let to = '';
       let state = '';
 
-      if (activity.eventName == "PaymentSent") {
+      if (activity.eventName == 'PaymentSent') {
         from = 'You';
         state = 'paid';
         to = activity.userId
-      } else if (activity.eventName == "PaymentReceived") {
+      } else if (activity.eventName == 'PaymentReceived') {
         from = activity.userId;
         state = 'paid';
         to = 'you'
-      } else if (activity.eventName == "PaymentRequested") {
+      } else if (activity.eventName == 'PaymentRequested') {
         from = activity.userId;
         state = 'requested';
         to = 'you'
       }
-      activities.value.push({
+      activities.push({
         from,
         to,
         state,
@@ -100,18 +113,6 @@ export default defineComponent({
         date: new Date (activity.timestamp)
       })
     };
-
-    return {
-      auth0: auth0,
-      tableRef,
-
-      columns,
-      activities,
-
-      pagination: {
-        rowsPerPage: 0
-      }
-    }
   }
 });
 </script>
