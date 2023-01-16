@@ -55,13 +55,13 @@ export default defineComponent({
   },
   async beforeCreate() {
     const fn = async () => {
-      if (unref(!this.auth0.isAuthenticated)) {
+      if (!unref(this.auth0.isAuthenticated)) {
         return true;
       }
 
       this.$router.push({ path: '/main' });
 
-      return false;
+      return true;
     };
 
     if (!unref(this.auth0.isLoading)) {
