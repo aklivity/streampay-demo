@@ -20,7 +20,7 @@
        <template v-slot:body="props">
          <q-tr :props="props" no-hover>
            <q-td  key="avatar" :props="props" style="width: 50px">
-             <q-avatar color="primary" text-color="white">U</q-avatar>
+             <q-avatar color="primary" text-color="white">{{ props.row.avatar }}</q-avatar>
            </q-td>
            <q-td  key="activities" :props="props">
              <div class="text-h6">
@@ -35,8 +35,8 @@
              key="amount"
              :props="props"
            >
-             <div>
-             {{ props.row.amount }}
+             <div class="text-subtitle1" :style="props.row.amount < 0 ? `color:red;` : 'color:green;'" >
+               {{ props.row.amount }}
              </div>
            </q-td>
          </q-tr>
@@ -46,10 +46,9 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, ref, unref} from 'vue';
+import {defineComponent, ref} from 'vue';
 import {useAuth0} from "@auth0/auth0-vue";
 import {streamingUrl} from "boot/axios";
-import {watchEffectOnceAsync} from "@auth0/auth0-vue/src/utils";
 
 export default defineComponent({
   name: 'MainPage',
@@ -73,6 +72,7 @@ export default defineComponent({
     const activities = ref([] as any);
 
     return {
+      color: "text-red",
       auth0,
       tableRef,
       columns,
@@ -106,7 +106,10 @@ export default defineComponent({
         state = 'requested';
         to = 'you'
       }
+      const avatar = from.charAt(0).toUpperCase();
+
       activities.push({
+        avatar,
         from,
         to,
         state,

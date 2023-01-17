@@ -92,6 +92,7 @@ import {defineComponent, ref, unref} from 'vue';
 import {useAuth0} from '@auth0/auth0-vue';
 import {api, streamingUrl} from "boot/axios";
 import {watchEffectOnceAsync} from "@auth0/auth0-vue/src/utils";
+import {v4} from "uuid";
 
 export default defineComponent({
   name: 'MainLayout',
@@ -131,6 +132,7 @@ export default defineComponent({
       const balance = JSON.parse(event.data);
       updateBalance(balance.balance);
     };
+    await this.updateUser();
   },
   methods: {
      logout() {
@@ -148,6 +150,20 @@ export default defineComponent({
     },
     updateBalance(newBalance: number) {
       this.balance = newBalance;
+    },
+    async updateUser() {
+      const accessToken = await this.auth0.getAccessTokenSilently();
+      const authorization = { Authorization: `Bearer ${accessToken}` };
+      await api.put(`/users/${this.user.sub}`, {
+        "id": this.user,
+        "name": this.user.given_name,
+        "username": this.user.nickname
+      }, {
+        headers: {
+          'Idempotency-Key': v4(),
+          ...authorization
+        }
+      })
     }
   },
   async beforeCreate() {

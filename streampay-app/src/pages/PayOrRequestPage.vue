@@ -12,7 +12,6 @@ import {defineComponent, unref} from "vue";
 import PayOrRequestForm from "components/PayOrRequestForm.vue";
 import {useRoute} from "vue-router";
 import {useAuth0} from "@auth0/auth0-vue";
-import {watchEffectOnceAsync} from "@auth0/auth0-vue/src/utils";
 
 export default defineComponent({
   name: 'PayOrRequestPage',
