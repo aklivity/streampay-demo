@@ -74,6 +74,7 @@ export default defineComponent({
     return {
       color: "text-red",
       auth0,
+      user: auth0.user,
       tableRef,
       columns,
       activities,
@@ -84,38 +85,38 @@ export default defineComponent({
   },
   async mounted() {
     const accessToken = await this.auth0.getAccessTokenSilently();
+    const userId = this.user.sub;
     const activitiesStream = new EventSource(`${streamingUrl}/activities?access_token=${accessToken}`);
     const activities = this.activities;
 
     activitiesStream.onmessage = function (event: MessageEvent) {
       const activity = JSON.parse(event.data);
-      let from = '';
-      let to = '';
-      let state = '';
+      if (activity.eventName == 'PaymentSent' && activity.toUserId == userId) {
 
-      if (activity.eventName == 'PaymentSent') {
-        from = 'You';
-        state = 'paid';
-        to = activity.userId
-      } else if (activity.eventName == 'PaymentReceived') {
-        from = activity.userId;
-        state = 'paid';
-        to = 'you'
-      } else if (activity.eventName == 'PaymentRequested') {
-        from = activity.userId;
-        state = 'requested';
-        to = 'you'
+      } else {
+        let state = '';
+
+        if (activity.eventName == 'PaymentSent') {
+          state = 'paid';
+        } else if (activity.eventName == 'PaymentReceived') {
+          state = 'paid';
+        } else if (activity.eventName == 'PaymentRequested') {
+          state = 'requested';
+        }
+        const from = activity.fromUserId == userId ? 'You' : activity.fromUserName;
+        const to = activity.toUserId == userId ? 'you' : activity.toUserName;
+
+        const avatar = from.charAt(0).toUpperCase();
+
+        activities.push({
+          avatar,
+          from,
+          to,
+          state,
+          amount: activity.amount,
+          date: new Date (activity.timestamp)
+        });
       }
-      const avatar = from.charAt(0).toUpperCase();
-
-      activities.push({
-        avatar,
-        from,
-        to,
-        state,
-        amount: activity.amount,
-        date: new Date (activity.timestamp)
-      })
     };
   }
 });

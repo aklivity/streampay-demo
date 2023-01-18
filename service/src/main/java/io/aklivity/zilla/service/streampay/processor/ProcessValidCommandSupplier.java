@@ -180,7 +180,8 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
 
             final Record paymentRequest = new Record(UUID.randomUUID().toString(),
                 PaymentRequest.builder()
-                    .userId(new String(userId.value()))
+                    .fromUserId(new String(userId.value()))
+                    .toUserId(requestCommand.getUserId())
                     .amount(requestCommand.getAmount())
                     .notes(requestCommand.getNotes())
                     .timestamp(record.timestamp())

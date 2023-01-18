@@ -3,6 +3,9 @@
  */
 package io.aklivity.zilla.service.streampay;
 
+import static org.apache.kafka.streams.StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG;
+import static org.apache.kafka.streams.StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -65,8 +68,8 @@ public class KafkaConfig
         props.put("security.protocol", this.securityProtocol);
         props.put("sasl.mechanism", saslMechanism);
         props.put("sasl.jaas.config", jaasCfg);
-        props.put("default.key.serde", Serdes.String().getClass().getName());
-        props.put("default.value.serde", Serde.class.getName());
+        props.put(DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        props.put(DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serde.class.getName());
         props.put("default.deserialization.exception.handler", LogAndContinueExceptionHandler.class);
         if (this.stateDir != null)
         {

@@ -157,7 +157,7 @@ export default defineComponent({
     const authorization = { Authorization: `Bearer ${accessToken}` };
     const updateBalance = this.updateBalance;
 
-    const balanceStream = new EventSource(`${streamingUrl}/balances?access_token=${accessToken}`);
+    const balanceStream = new EventSource(`${streamingUrl}/current-balance?access_token=${accessToken}`);
 
     balanceStream.onmessage = function (event: MessageEvent) {
       const balance = JSON.parse(event.data);
@@ -174,20 +174,21 @@ export default defineComponent({
           const request = response.data;
           this.amount = request.amount;
 
-          api.get('/users/' + this.user.sub)
-            .then((response) => {
-              const user = response.data;
-
-              const newUserOption = {
-                label: user.name,
-                value: user.id
-              };
-              this.userOption = newUserOption;
-              this.userOptions.push(newUserOption);
-            });
+          this.fetchAndSetUsers(request.userId);
         })
     } else {
-      api.get('/users', {
+      await this.fetchAndSetUsers();
+    }
+  },
+  methods: {
+    updateBalance(newBalance: number) {
+      this.balance = newBalance;
+    },
+    async fetchAndSetUsers(userId = null) {
+      const accessToken = await this.auth0.getAccessTokenSilently();
+      const authorization = { Authorization: `Bearer ${accessToken}` };
+
+        await api.get('/users', {
           headers: {
             ...authorization
           }
@@ -202,14 +203,13 @@ export default defineComponent({
               };
               this.userOptions.push(newUserOption as any);
             }
+
+            if (userId && userId == user.id) {
+              this.userOption = { label: user.name, value: user.id };
+            }
           }
         });
     }
   },
-  methods: {
-    updateBalance(newBalance: number) {
-      this.balance = newBalance;
-    }
-  }
 })
 </script>

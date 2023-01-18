@@ -61,7 +61,7 @@
             {
               "headers": {
                 ":method": "GET",
-                ":path": "/balances"
+                ":path": "/current-balance"
               }
             }
           ],
@@ -71,20 +71,14 @@
           "when": [
             {
               "headers": {
-                ":method": "GET",
-                ":path": "/balances/*"
-              }
-            },
-            {
-              "headers": {
                 ":method": "PUT",
-                ":path": "/users/*"
+                ":path": "/current-user"
               }
             },
             {
               "headers": {
                 ":method": "GET",
-                ":path": "/users/*"
+                ":path": "/current-user"
               }
             },
             {
@@ -136,11 +130,7 @@
             "event": {
               "id": "[\"${base64(key)}\",\"${etag}\"]"
             },
-            "topic": "activities",
-            "filters": [
-            {
-              "key": "${guarded['jwt40082c1e-8108-4359-9067-64f2c11361d8'].identity}"
-            }]
+            "topic": "activities"
           },
           "guarded": {
             "jwt40082c1e-8108-4359-9067-64f2c11361d8": [
@@ -163,7 +153,7 @@
             "filters": [
             {
               "headers": {
-                "": "${guarded['jwt40082c1e-8108-4359-9067-64f2c11361d8'].identity}"
+                "zilla:identity": "${guarded['jwt40082c1e-8108-4359-9067-64f2c11361d8'].identity}"
               }
             }]
           },
@@ -176,7 +166,7 @@
         {
           "when": [
             {
-              "path": "/balances"
+              "path": "/current-balance"
             }
           ],
           "exit": "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
@@ -205,38 +195,15 @@
         {
           "when": [
             {
-              "method": "GET",
-              "path": "/balances/{id}"
-            }
-          ],
-          "exit": "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
-          "with": {
-            "capability": "fetch",
-            "topic": "balances",
-            "filters": [
-              {
-                "key": "${params.id}"
-              }
-            ]
-          },
-          "guarded": {
-            "jwt40082c1e-8108-4359-9067-64f2c11361d8": [
-              "read:balances"
-            ]
-          }
-        },
-        {
-          "when": [
-            {
               "method": "PUT",
-              "path": "/users/{id}"
+              "path": "/current-user"
             }
           ],
           "exit": "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
           "with": {
             "capability": "produce",
             "topic": "users",
-            "key": "${params.id}",
+            "key": "${guarded['jwt40082c1e-8108-4359-9067-64f2c11361d8'].identity}",
             "overrides": {}
           },
           "guarded": {
@@ -249,7 +216,7 @@
           "when": [
             {
               "method": "GET",
-              "path": "/users/{id}"
+              "path": "/current-user"
             }
           ],
           "exit": "kafka_cache_client98d198b7-b232-41c8-ad3e-56310f7b9ec3",
@@ -258,7 +225,7 @@
             "topic": "users",
             "filters": [
               {
-                "key": "${params.id}"
+                "key": "${guarded['jwt40082c1e-8108-4359-9067-64f2c11361d8'].identity}"
               }
             ]
           },
@@ -376,6 +343,12 @@
           "balances",
           "users",
           "payment-requests"
+        ],
+        "topics": [
+          {
+            "name": "activities",
+            "defaultOffset": "historical"
+          }
         ]
       },
       "exit": "kafka_client98d198b7-b232-41c8-ad3e-56310f7b9ec3"

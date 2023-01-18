@@ -7,15 +7,20 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Getter
+@Setter
 public class Event
 {
     String eventName;
     double amount;
-    String userId;
+    String fromUserId;
+    String fromUserName;
+    String toUserId;
+    String toUserName;
     long timestamp;
 }

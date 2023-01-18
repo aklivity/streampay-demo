@@ -126,7 +126,7 @@ export default defineComponent({
       incRequests();
     };
 
-    const balanceStream = new EventSource(`${streamingUrl}/balances?access_token=${accessToken}`);
+    const balanceStream = new EventSource(`${streamingUrl}/current-balance?access_token=${accessToken}`);
 
     balanceStream.onmessage = function (event: MessageEvent) {
       const balance = JSON.parse(event.data);
@@ -154,9 +154,9 @@ export default defineComponent({
     async updateUser() {
       const accessToken = await this.auth0.getAccessTokenSilently();
       const authorization = { Authorization: `Bearer ${accessToken}` };
-      await api.put(`/users/${this.user.sub}`, {
-        "id": this.user,
-        "name": this.user.given_name,
+      await api.put(`/current-user`, {
+        "id": this.user.sub,
+        "name": this.user.name,
         "username": this.user.nickname
       }, {
         headers: {
