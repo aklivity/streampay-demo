@@ -9,7 +9,6 @@ import static org.apache.kafka.streams.StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_C
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
@@ -21,6 +20,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.KafkaStreamsConfiguration;
 import org.springframework.kafka.config.StreamsBuilderFactoryBean;
+import org.springframework.kafka.support.serializer.JsonSerde;
 
 @Configuration
 @EnableKafka
@@ -69,7 +69,7 @@ public class KafkaConfig
         props.put("sasl.mechanism", saslMechanism);
         props.put("sasl.jaas.config", jaasCfg);
         props.put(DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serde.class.getName());
+        props.put(DEFAULT_VALUE_SERDE_CLASS_CONFIG, JsonSerde.class.getName());
         props.put("default.deserialization.exception.handler", LogAndContinueExceptionHandler.class);
         if (this.stateDir != null)
         {

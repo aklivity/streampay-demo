@@ -174,7 +174,7 @@ export default defineComponent({
           const request = response.data;
           this.amount = request.amount;
 
-          this.fetchAndSetUsers(request.userId);
+          this.fetchAndSetUsers(request.fromUserId);
         })
     } else {
       await this.fetchAndSetUsers();

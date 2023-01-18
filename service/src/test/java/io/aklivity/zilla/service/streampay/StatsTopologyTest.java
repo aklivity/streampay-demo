@@ -89,22 +89,28 @@ public class StatsTopologyTest
     @Test
     public void shouldProcessTransaction()
     {
-        usersInTopic.pipeInput(new TestRecord<>("user1", User.builder()
-            .id("user1")
-            .name("Test")
-            .username("test")
+        usersInTopic.pipeInput(new TestRecord<>("alice", User.builder()
+            .id("alice")
+            .name("Alice")
+            .username("alice")
             .build()));
-        usersInTopic.pipeInput(new TestRecord<>("user2", User.builder()
-            .id("user2")
-            .name("Test")
-            .username("test")
+        usersInTopic.pipeInput(new TestRecord<>("bob", User.builder()
+            .id("bob")
+            .name("Bob")
+            .username("bob")
             .build()));
 
-        transactionsInTopic.pipeInput(new TestRecord<>("user1", Transaction.builder()
+        transactionsInTopic.pipeInput(new TestRecord<>("alice", Transaction.builder()
             .amount(-123)
-            .userId("user2")
-            .ownerId("user1")
+            .ownerId("alice")
+            .userId("bob")
             .timestamp(Instant.now().toEpochMilli())
+            .build()));
+
+        usersInTopic.pipeInput(new TestRecord<>("alice", User.builder()
+            .id("alice")
+            .name("Alicia")
+            .username("alicia")
             .build()));
 
         List<KeyValue<String, Event>> events = eventOutTopic.readKeyValuesToList();

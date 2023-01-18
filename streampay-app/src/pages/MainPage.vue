@@ -91,7 +91,8 @@ export default defineComponent({
 
     activitiesStream.onmessage = function (event: MessageEvent) {
       const activity = JSON.parse(event.data);
-      if (activity.eventName == 'PaymentSent' && activity.toUserId == userId) {
+      if (activity.eventName == 'PaymentReceived' && activity.fromUserId == userId ||
+        activity.eventName == 'PaymentSent' && activity.toUserId == userId) {
 
       } else {
         let state = '';
