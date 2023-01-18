@@ -89,6 +89,10 @@ export default defineComponent({
     const activitiesStream = new EventSource(`${streamingUrl}/activities?access_token=${accessToken}`);
     const activities = this.activities;
 
+    activitiesStream.onopen = function () {
+      activities.splice(0);
+    }
+
     activitiesStream.onmessage = function (event: MessageEvent) {
       const activity = JSON.parse(event.data);
       if (activity.eventName == 'PaymentReceived' && activity.fromUserId == userId ||

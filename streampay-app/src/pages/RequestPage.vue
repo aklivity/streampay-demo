@@ -89,6 +89,10 @@ export default defineComponent({
     const requestStream = new EventSource(`${streamingUrl}/payment-requests?access_token=${accessToken}`);
     const requests = this.requests;
 
+    requestStream.onopen = function () {
+      requests.slice(0);
+    }
+
     requestStream.addEventListener('delete', (event: MessageEvent) => {
       const lastEventId = JSON.parse(event.lastEventId?.toString());
       const key = Buffer.from(lastEventId[0], "base64").toString("utf8");
