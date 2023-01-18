@@ -106,11 +106,6 @@ public class StatsTopologyTest
             .ownerId("user1")
             .timestamp(Instant.now().toEpochMilli())
             .build()));
-        usersInTopic.pipeInput(new TestRecord<>("user1", User.builder()
-            .id("user1")
-            .name("Test1")
-            .username("test1")
-            .build()));
 
         List<KeyValue<String, Event>> events = eventOutTopic.readKeyValuesToList();
         assertEquals(1, events.size());
