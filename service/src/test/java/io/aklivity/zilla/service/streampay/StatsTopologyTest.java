@@ -103,7 +103,13 @@ public class StatsTopologyTest
         transactionsInTopic.pipeInput(new TestRecord<>("user1", Transaction.builder()
             .amount(-123)
             .userId("user2")
+            .ownerId("user1")
             .timestamp(Instant.now().toEpochMilli())
+            .build()));
+        usersInTopic.pipeInput(new TestRecord<>("user1", User.builder()
+            .id("user1")
+            .name("Test1")
+            .username("test1")
             .build()));
 
         List<KeyValue<String, Event>> events = eventOutTopic.readKeyValuesToList();

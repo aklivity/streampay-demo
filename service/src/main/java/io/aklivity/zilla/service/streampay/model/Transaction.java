@@ -17,7 +17,8 @@ import lombok.NoArgsConstructor;
 public class Transaction
 {
     UUID id;
+    String ownerId;
+    String userId;
     double amount;
     long timestamp;
-    String userId;
 }

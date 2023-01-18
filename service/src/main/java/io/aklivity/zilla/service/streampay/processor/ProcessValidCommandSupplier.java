@@ -120,6 +120,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
                 final Record<String, Transaction> withdrawalsTransaction = new Record<>(userIdValue,
                     Transaction.builder()
                         .id(UUID.randomUUID())
+                        .ownerId(userIdValue)
                         .amount(-payCommand.getAmount())
                         .timestamp(record.timestamp())
                         .userId(payCommand.getUserId())
@@ -131,6 +132,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
                 final Record<String, Transaction> depositTransaction = new Record<>(payCommand.getUserId(),
                     Transaction.builder()
                         .id(UUID.randomUUID())
+                        .ownerId(payCommand.getUserId())
                         .amount(payCommand.getAmount())
                         .timestamp(record.timestamp())
                         .userId(userIdValue)

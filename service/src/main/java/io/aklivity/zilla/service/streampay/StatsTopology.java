@@ -67,7 +67,6 @@ public class StatsTopology
             .branch((key, value) -> value.getAmount() >= 0, Branched.as(paymentReceived))
             .defaultBranch();
 
-
         transactionBranches.get(branch + paymentSent)
             .toTable(Named.as(paymentSent), Materialized.with(stringSerde, transactionSerde))
             .leftJoin(users, Transaction::getUserId, (tran, user) ->
@@ -77,14 +76,9 @@ public class StatsTopology
                 .timestamp(Instant.now().toEpochMilli())
                 .toUserId(tran.getUserId())
                 .toUserName(user.getName())
+                .fromUserId(tran.getOwnerId())
                 .build(), Materialized.with(stringSerde, eventSerde))
-            .mapValues((key, event) ->
-            {
-                event.setFromUserId(key);
-                Event newEvent = event;
-                return newEvent;
-            }, Materialized.with(stringSerde, eventSerde))
-            .join(users, Event::getFromUserId, (event, user) ->
+            .leftJoin(users, Event::getFromUserId, (event, user) ->
             {
                 event.setFromUserName(user.getName());
                 return event;
@@ -101,14 +95,9 @@ public class StatsTopology
                     .timestamp(Instant.now().toEpochMilli())
                     .fromUserId(tran.getUserId())
                     .fromUserName(user.getName())
+                    .toUserId(tran.getOwnerId())
                     .build(), Materialized.with(stringSerde, eventSerde))
-            .mapValues((key, event) ->
-            {
-                event.setToUserId(key);
-                Event newEvent = event;
-                return newEvent;
-            }, Materialized.with(stringSerde, eventSerde))
-            .join(users, Event::getFromUserId, (event, user) ->
+            .leftJoin(users, Event::getToUserId, (event, user) ->
             {
                 event.setToUserName(user.getName());
                 return event;
