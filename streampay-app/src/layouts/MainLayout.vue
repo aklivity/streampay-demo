@@ -54,7 +54,7 @@
           </q-item-section>
 
           <q-item-section>
-              <div>Requests <q-badge rounded color="red" :label="request" /></div>
+              <div>Requests <q-badge v-if="request > 0" rounded color="red" :label="request" /></div>
           </q-item-section>
         </q-item>
 
