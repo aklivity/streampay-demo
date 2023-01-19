@@ -25,7 +25,7 @@ such as `PayCommand`, `RequestCommand`.
 - `users` - Stores information about users(logcompacted topic).
 
 ## Event Processing Service
-This service is responsible to processes commands such as `PayCommand`, `RequestCommand` and produce messages
+This service responsible for processing commands such as `PayCommand`, `RequestCommand` and producing messages
 to the appropriate topics. It also has statistic topologies that builds activities, statistics out of topics such as
 `transactions`, and `payment-requests`
 
