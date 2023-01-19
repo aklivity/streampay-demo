@@ -5,6 +5,7 @@ package io.aklivity.zilla.service.streampay;
 
 import static org.apache.kafka.streams.StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG;
 import static org.apache.kafka.streams.StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG;
+import static org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.REPLACE_THREAD;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +13,6 @@ import java.util.Map;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
-import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.StreamsBuilderFactoryBeanCustomizer;
 import org.springframework.context.annotation.Bean;
@@ -83,7 +83,6 @@ public class KafkaConfig
     @Bean
     public StreamsBuilderFactoryBeanCustomizer streamsBuilderFactoryBeanCustomizer()
     {
-        return sfb -> sfb.setStreamsUncaughtExceptionHandler(exception ->
-                        StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.REPLACE_THREAD);
+        return sfb -> sfb.setStreamsUncaughtExceptionHandler(exception -> REPLACE_THREAD);
     }
 }

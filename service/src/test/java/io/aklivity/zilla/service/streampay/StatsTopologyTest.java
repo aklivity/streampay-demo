@@ -4,14 +4,14 @@
 package io.aklivity.zilla.service.streampay;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -31,7 +31,7 @@ import io.aklivity.zilla.service.streampay.model.Event;
 import io.aklivity.zilla.service.streampay.model.PaymentRequest;
 import io.aklivity.zilla.service.streampay.model.Transaction;
 import io.aklivity.zilla.service.streampay.model.User;
-import io.confluent.kafka.serializers.KafkaJsonDeserializer;
+import io.aklivity.zilla.service.streampay.serde.SerdeFactory;
 
 public class StatsTopologyTest
 {
@@ -73,11 +73,10 @@ public class StatsTopologyTest
         paymentRequestsInTopic = testDriver.createInputTopic(PAYMENT_REQUESTS_TOPIC,
             new StringSerializer(), new JsonSerializer<>());
 
-        StringDeserializer keyDeserializer = new StringDeserializer();
-        KafkaJsonDeserializer<Event> eventDeserializer = new KafkaJsonDeserializer<>();
-        eventDeserializer.configure(Collections.emptyMap(), false);
+        final Serde<Event> eventSerde = SerdeFactory.jsonSerdeFor(Event.class, false);
+        final Serde<String> stringSerde = Serdes.String();
         eventOutTopic = testDriver.createOutputTopic(ACTIVITIES_TOPIC,
-            keyDeserializer, eventDeserializer);
+            stringSerde.deserializer(), eventSerde.deserializer());
     }
 
     @AfterEach
@@ -115,27 +114,46 @@ public class StatsTopologyTest
 
         List<KeyValue<String, Event>> events = eventOutTopic.readKeyValuesToList();
         assertEquals(1, events.size());
+        final KeyValue<String, Event> eventRecord = events.get(0);
+        final Event event = eventRecord.value;
+        assertTrue("alice".equals(eventRecord.key));
+        assertEquals("PaymentSent", event.getEventName());
+        assertEquals(-123, event.getAmount());
+        assertEquals("alice", event.getFromUserId());
+        assertEquals("bob", event.getToUserId());
+        assertEquals("Bob", event.getToUserName());
     }
 
     @Test
     public void shouldProcessPaymentRequest()
     {
-        usersInTopic.pipeInput(new TestRecord<>("user1", User.builder()
-            .id("user1")
-            .name("Test")
-            .username("test")
+        usersInTopic.pipeInput(new TestRecord<>("alice", User.builder()
+            .id("alice")
+            .name("Alice")
+            .username("alice")
             .build()));
-        usersInTopic.pipeInput(new TestRecord<>("user2", User.builder()
-            .id("user2")
-            .name("Test")
-            .username("test")
+        usersInTopic.pipeInput(new TestRecord<>("bob", User.builder()
+            .id("bob")
+            .name("Bob")
+            .username("bob")
             .build()));
 
-        paymentRequestsInTopic.pipeInput(new TestRecord<>("user1", PaymentRequest.builder()
+        paymentRequestsInTopic.pipeInput(new TestRecord<>("alice", PaymentRequest.builder()
             .amount(123)
-            .fromUserId("user1")
-            .toUserId("user2")
+            .fromUserId("alice")
+            .toUserId("bob")
             .timestamp(Instant.now().toEpochMilli())
             .build()));
+
+        List<KeyValue<String, Event>> events = eventOutTopic.readKeyValuesToList();
+        assertEquals(1, events.size());
+        final KeyValue<String, Event> eventRecord = events.get(0);
+        final Event event = eventRecord.value;
+        assertTrue("alice".equals(eventRecord.key));
+        assertEquals("PaymentRequested", event.getEventName());
+        assertEquals(123, event.getAmount());
+        assertEquals("alice", event.getFromUserId());
+        assertEquals("bob", event.getToUserId());
+        assertEquals("Bob", event.getToUserName());
     }
 }
