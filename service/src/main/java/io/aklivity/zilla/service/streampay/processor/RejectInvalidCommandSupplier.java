@@ -18,7 +18,8 @@ public class RejectInvalidCommandSupplier implements ProcessorSupplier<String, C
 {
     private final String replyTo;
 
-    public RejectInvalidCommandSupplier(String replyTo)
+    public RejectInvalidCommandSupplier(
+        String replyTo)
     {
         this.replyTo = replyTo;
     }
@@ -31,13 +32,15 @@ public class RejectInvalidCommandSupplier implements ProcessorSupplier<String, C
             ProcessorContext context;
 
             @Override
-            public void init(final ProcessorContext context)
+            public void init(
+                final ProcessorContext context)
             {
                 this.context = context;
             }
 
             @Override
-            public void process(Record<String, Command> record)
+            public void process(
+                Record<String, Command> record)
             {
                 final Headers headers = record.headers();
                 final Header correlationId = headers.lastHeader("zilla:correlation-id");

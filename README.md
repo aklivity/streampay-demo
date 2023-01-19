@@ -3,7 +3,7 @@ This StreamPay app demo consists of 4 main components such as:
 
 - Redpanda.
 - Event processing service written using `Spring Boot`.
-- Zilla API gateway that hosts both app web interface and APIs.
+- Zilla API Gateway that hosts both app web interface and APIs.
 - StreamPay app UI
 
 ## Requirements
@@ -30,7 +30,7 @@ to the appropriate topics. It also has statistic topologies that builds activiti
 `transactions`, and `payment-requests`
 
 ### Build the service
-All components are launched from docker stack defined in `stack.yaml` however, chat-service is reference to
+All components are launched from docker stack defined in `stack.yaml` however, streampay-service is reference to
 `image: "streampay-service:develop-SNAPSHOT"` which should be build locally. Please run the below command to build image.
 
 ```shell
@@ -90,7 +90,7 @@ Creating service example_streampay-service
 
 # Test
 
-Navigate to `https://localhost:9090/#/` in the browser.
+Navigate to `https://localhost:9090` in the browser.
 
 ![screenshot](./assets/screenshot.png)
 

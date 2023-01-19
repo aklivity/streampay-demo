@@ -24,7 +24,10 @@ public class CommandJsonDeserializer implements Deserializer<Command>
     {
     }
 
-    public Command deserialize(String topic, Headers headers, byte[] data)
+    public Command deserialize(
+        String topic,
+        Headers headers,
+        byte[] data)
     {
         Header domainModelHeader = headers.lastHeader("zilla:domain-model");
         String domainModel = new String(domainModelHeader.value());

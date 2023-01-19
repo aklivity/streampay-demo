@@ -52,7 +52,8 @@ public class StatsTopology
     }
 
     @Autowired
-    public void buildPipeline(StreamsBuilder satsKafkaStreamsBuilder)
+    public void buildPipeline(
+        StreamsBuilder satsKafkaStreamsBuilder)
     {
         GlobalKTable<String, User> users = satsKafkaStreamsBuilder.globalTable(usersTopic,
             Consumed.with(stringSerde, userSerde), Materialized.with(stringSerde, userSerde));

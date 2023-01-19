@@ -25,7 +25,9 @@ public final class SerdeFactory
         return commandSerde;
     }
 
-    public static <T> Serde jsonSerdeFor(Class<T> clazz, boolean isKey)
+    public static <T> Serde jsonSerdeFor(
+        Class<T> clazz,
+        boolean isKey)
     {
         Map<String, Class<T>> props = Map.of("json.key.type", clazz, "json.value.type", clazz);
         KafkaJsonSerializer<T> ser = new KafkaJsonSerializer();

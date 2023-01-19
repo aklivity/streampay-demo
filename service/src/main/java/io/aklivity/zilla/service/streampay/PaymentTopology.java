@@ -62,7 +62,8 @@ public class PaymentTopology
     }
 
     @Autowired
-    public void buildPipeline(StreamsBuilder paymentKafkaStreamsBuilder)
+    public void buildPipeline(
+        StreamsBuilder paymentKafkaStreamsBuilder)
     {
         // create store
         final StoreBuilder balanceStoreBuilder = Stores.keyValueStoreBuilder(

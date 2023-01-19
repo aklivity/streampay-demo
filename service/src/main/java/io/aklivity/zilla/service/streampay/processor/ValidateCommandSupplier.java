@@ -50,7 +50,8 @@ public class ValidateCommandSupplier implements ProcessorSupplier<String, Comman
         }
 
         @Override
-        public void process(Record<String, Command> record)
+        public void process(
+            Record<String, Command> record)
         {
             final Headers headers = record.headers();
             final Header correlationId = headers.lastHeader("zilla:correlation-id");
