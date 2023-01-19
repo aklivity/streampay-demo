@@ -74,12 +74,8 @@ services:
     volumes:
       - ./zilla.json:/zilla.json:ro
       - ./localhost.p12:/localhost.p12:ro
+      - ../app/dist/spa:/app/dist:ro
     networks:
       - net0
     ports:
-      - "8080:8080"
       - "9090:9090"
-      - "4444:4444"
-    environment:
-      - JAVA_OPTIONS=-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=*:4444
-

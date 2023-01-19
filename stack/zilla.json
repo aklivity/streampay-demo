@@ -108,7 +108,51 @@
           ],
           "exit": "http-kafka_proxy4ee61c88-61e6-4676-a420-4ff918b0c534"
         }
+      ],
+      "exit": "http_filesystem_proxy0"
+    },
+    "http_filesystem_proxy0":
+    {
+      "type" : "http-filesystem",
+      "kind": "proxy",
+      "routes":
+      [
+        {
+          "when":
+          [
+            {
+              "path": "/"
+            }
+          ],
+          "exit": "filesystem_server0",
+          "with":
+          {
+            "path": "index.html"
+          }
+        },
+        {
+          "when":
+          [
+            {
+              "path": "/{path}"
+            }
+          ],
+          "exit": "filesystem_server0",
+          "with":
+          {
+            "path": "${params.path}"
+          }
+        }
       ]
+    },
+    "filesystem_server0":
+    {
+      "type" : "filesystem",
+      "kind": "server",
+      "options":
+      {
+        "location": "/app/dist/"
+      }
     },
     "sse_server4ee61c88-61e6-4676-a420-4ff918b0c534": {
       "type": "sse",

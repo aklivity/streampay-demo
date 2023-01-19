@@ -75,8 +75,6 @@ export default defineComponent({
 
     const requests = ref([] as any);
 
-
-
     return {
       auth0: auth0,
       tableRef,
