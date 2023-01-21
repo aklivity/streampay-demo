@@ -3,6 +3,8 @@
  */
 package io.aklivity.streampay.simulation.service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 import org.slf4j.Logger;
@@ -20,6 +22,7 @@ import io.aklivity.streampay.data.model.User;
 public class SimulateUser
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimulateUser.class);
+    private Map<String, User> users = new HashMap<>();
     private int numberOfUsers = 0;
 
     @Value("${users.topic:users}")
@@ -34,9 +37,27 @@ public class SimulateUser
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
 
-    public int randomUserId()
+    public int randomVirtualUserId()
     {
         return random.nextInt(0, numberOfUsers);
+    }
+
+    public String randomRealUserId()
+    {
+        String userId = null;
+        if (!users.isEmpty())
+        {
+            Object[] keys = users.keySet().toArray();
+            userId = (String) keys[random.nextInt(keys.length)];
+        }
+        return userId;
+    }
+
+    public void insertUser(
+        String key,
+        User user)
+    {
+        users.put(key, user);
     }
 
     public void createUser()

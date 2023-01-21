@@ -23,21 +23,33 @@ public class SimulationTask
     @Autowired
     private SimulatePayment simulatePayment;
 
-    @Scheduled(fixedRateString = "${user.creation.rate:5000}")
+    @Scheduled(fixedRateString = "${user.creation.rate:8000}")
     public void scheduleVirtualUserCreation()
     {
         simulateUser.createUser();
     }
 
-    @Scheduled(fixedRateString = "${payment.request.rate:12000}")
-    public void schedulePaymentRequest()
+    @Scheduled(fixedRateString = "${payment.request.virtual.rate:12000}")
+    public void schedulePaymentRequestForVirtualUser()
     {
-        simulatePaymentRequest.requestPayment();
+        simulatePaymentRequest.requestPaymentForVirtualUser();
     }
 
-    @Scheduled(fixedRateString = "${payment.rate:10000}")
-    public void schedulePayment()
+    @Scheduled(fixedRateString = "${payment.request.real.rate:36000}")
+    public void schedulePaymentRequestForRealUser()
     {
-        simulatePayment.makePayment();
+        simulatePaymentRequest.requestPaymentForRealUser();
+    }
+
+    @Scheduled(fixedRateString = "${payment.virtual.rate:10000}")
+    public void schedulePaymentForVirtualUser()
+    {
+        simulatePayment.makePaymentForVirtualUser();
+    }
+
+    @Scheduled(fixedRateString = "${payment.real.rate:30000}")
+    public void schedulePaymentForRealUser()
+    {
+        simulatePayment.makePaymentForRealUser();
     }
 }

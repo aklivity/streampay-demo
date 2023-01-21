@@ -14,6 +14,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.Message;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 import io.aklivity.streampay.data.model.PaymentRequest;
@@ -35,22 +38,37 @@ public class SimulatePaymentRequest
     @Autowired
     private Random random;
 
-    public void requestPayment()
+    public void requestPaymentForVirtualUser()
     {
-        final PaymentRequest paymentRequest = creatPaymentRequest();
+        final PaymentRequest paymentRequest = creatPaymentRequestForVirtualUser();
         if (paymentRequest != null)
         {
             kafkaTemplate.send(paymentRequestsTopic, UUID.randomUUID().toString(), paymentRequest);
         }
     }
 
-    private PaymentRequest creatPaymentRequest()
+    public void requestPaymentForRealUser()
     {
-        final int fromUserId = simulateUser.randomUserId();
-        final int toUserId = simulateUser.randomUserId();
-        final double amount = new BigDecimal(random.nextDouble(1, 500))
+        final PaymentRequest paymentRequest = creatPaymentRequestForRealUser();
+        if (paymentRequest != null)
+        {
+            Message<PaymentRequest> message = MessageBuilder
+                .withPayload(paymentRequest)
+                .setHeader(KafkaHeaders.TOPIC, paymentRequestsTopic)
+                .setHeader(KafkaHeaders.KEY, UUID.randomUUID().toString())
+                .setHeader("content-type", "application/json")
+                .setHeader("zilla:identity", paymentRequest.getToUserId())
+                .build();
+            kafkaTemplate.send(message);
+        }
+    }
+
+    private PaymentRequest creatPaymentRequestForVirtualUser()
+    {
+        final int fromUserId = simulateUser.randomVirtualUserId();
+        final int toUserId = simulateUser.randomVirtualUserId();
+        final double amount = BigDecimal.valueOf(random.nextDouble(1, 500))
             .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
-        assert fromUserId != toUserId;
 
         PaymentRequest paymentRequest = null;
 
@@ -61,6 +79,32 @@ public class SimulatePaymentRequest
                 .fromUserId(String.format("virtual-user-%d", fromUserId))
                 .toUserId(String.format("virtual-user-%d", toUserId))
                 .notes("Please")
+                .timestamp(Instant.now().toEpochMilli())
+                .build();
+
+            LOGGER.info("Payment Requested from {} to {}", fromUserId, toUserId);
+        }
+
+
+        return paymentRequest;
+    }
+
+    private PaymentRequest creatPaymentRequestForRealUser()
+    {
+        final int fromUserId = simulateUser.randomVirtualUserId();
+        final String toUserId = simulateUser.randomRealUserId();
+        final double amount = new BigDecimal(random.nextDouble(1, 500))
+            .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
+
+        PaymentRequest paymentRequest = null;
+
+        if (toUserId != null)
+        {
+            paymentRequest = PaymentRequest.builder()
+                .amount(amount)
+                .fromUserId(String.format("virtual-user-%d", fromUserId))
+                .toUserId(toUserId)
+                .notes("Please send me some money")
                 .timestamp(Instant.now().toEpochMilli())
                 .build();
 

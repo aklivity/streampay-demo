@@ -32,19 +32,28 @@ public class SimulatePayment
     @Autowired
     private Random random;
 
-    public void makePayment()
+    public void makePaymentForVirtualUser()
     {
-        final Transaction transaction = creatPayment();
+        final Transaction transaction = creatPaymentForVirtualUser();
         if (transaction != null)
         {
             kafkaTemplate.send(transactionsTopic, transaction.getOwnerId(), transaction);
         }
     }
 
-    private Transaction creatPayment()
+    public void makePaymentForRealUser()
     {
-        final int ownerId = simulateUser.randomUserId();
-        final int userId = simulateUser.randomUserId();
+        final Transaction transaction = creatPaymentForRealUser();
+        if (transaction != null)
+        {
+            kafkaTemplate.send(transactionsTopic, transaction.getOwnerId(), transaction);
+        }
+    }
+
+    private Transaction creatPaymentForVirtualUser()
+    {
+        final int ownerId = simulateUser.randomVirtualUserId();
+        final int userId = simulateUser.randomVirtualUserId();
         final double amount = new BigDecimal(random.nextDouble(1, 200))
             .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
 
@@ -54,6 +63,30 @@ public class SimulatePayment
             transaction = Transaction.builder()
                 .id(UUID.randomUUID())
                 .ownerId(String.format("virtual-user-%d", ownerId))
+                .userId(String.format("virtual-user-%d", userId))
+                .amount(amount)
+                .timestamp(Instant.now().toEpochMilli())
+                .build();
+
+            LOGGER.info("Payment made from {} to {}", ownerId, userId);
+        }
+
+        return transaction;
+    }
+
+    private Transaction creatPaymentForRealUser()
+    {
+        final String ownerId = simulateUser.randomRealUserId();
+        final int userId = simulateUser.randomVirtualUserId();
+        final double amount = new BigDecimal(random.nextDouble(1, 200))
+            .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
+
+        Transaction transaction = null;
+        if (ownerId != null)
+        {
+            transaction = Transaction.builder()
+                .id(UUID.randomUUID())
+                .ownerId(ownerId)
                 .userId(String.format("virtual-user-%d", userId))
                 .amount(amount)
                 .timestamp(Instant.now().toEpochMilli())

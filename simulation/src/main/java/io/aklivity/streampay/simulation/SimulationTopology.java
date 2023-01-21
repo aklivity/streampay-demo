@@ -18,7 +18,10 @@ import org.springframework.stereotype.Component;
 
 import io.aklivity.streampay.data.model.PaymentRequest;
 import io.aklivity.streampay.data.model.Transaction;
+import io.aklivity.streampay.data.model.User;
 import io.aklivity.streampay.data.serde.SerdeFactory;
+import io.aklivity.streampay.simulation.processor.UserProcessor;
+import io.aklivity.streampay.simulation.service.SimulateUser;
 
 @Component
 public class SimulationTopology
@@ -27,11 +30,19 @@ public class SimulationTopology
     private final Serde<PaymentRequest> paymentRequestSerde = SerdeFactory.jsonSerdeFor(PaymentRequest.class, false);
     private final Serde<Transaction> transactionSerde = SerdeFactory.jsonSerdeFor(Transaction.class, false);
 
+    private final Serde<User> userSerde = SerdeFactory.jsonSerdeFor(User.class, false);
+
     @Value("${payment.requests.topic:payment-requests}")
     String paymentRequestsTopic;
 
     @Value("${transactions.topic:transactions}")
     String transactionsTopic;
+
+    @Value("${users.topic:users}")
+    String usersTopic;
+
+    @Autowired
+    private SimulateUser simulateUser;
 
 
     public SimulationTopology()
@@ -42,6 +53,11 @@ public class SimulationTopology
     public void buildPipeline(
         StreamsBuilder simulationKafkaStreamsBuilder)
     {
+        simulationKafkaStreamsBuilder.stream(usersTopic, Consumed.with(stringSerde, userSerde))
+                .filter((key, value) -> !key.startsWith("virtual-user"))
+                .process(() -> new UserProcessor(simulateUser));
+
+
         simulationKafkaStreamsBuilder.stream(paymentRequestsTopic, Consumed.with(stringSerde, paymentRequestSerde))
             .filter((key, value) -> value != null && value.getToUserId().startsWith("virtual-user"))
             .map((key, value) -> new KeyValue(value.getFromUserId(), Transaction.builder()
