@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.aklivity</groupId>
-    <artifactId>streampay-service</artifactId>
+    <artifactId>simulation</artifactId>
     <version>develop-SNAPSHOT</version>
     <inceptionYear>2021</inceptionYear>
 
@@ -34,6 +34,9 @@
         <checkstyle.config.location>io/aklivity/zilla/conf/checkstyle/configuration.xml</checkstyle.config.location>
         <checkstyle.suppressions.location>io/aklivity/zilla/conf/checkstyle/suppressions.xml</checkstyle.suppressions.location>
 
+        <kafka.version>3.3.1</kafka.version>
+        <serializer.version>7.1.1</serializer.version>
+        <rocksdbjni.version>7.8.3</rocksdbjni.version>
     </properties>
 
     <parent>
@@ -57,6 +60,12 @@
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.javafaker</groupId>
+            <artifactId>javafaker</artifactId>
+            <version>0.12</version>
+        </dependency>
+
 
         <!-- Testing -->
         <dependency>

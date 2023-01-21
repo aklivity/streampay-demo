@@ -67,6 +67,15 @@ services:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: redpanda.internal.net:29092
       SPRING_KAFKA_SECURITY_PROTOCOL: SASL_PLAINTEXT
 
+  streampay-simulation:
+      image: "simulation:develop-SNAPSHOT"
+      networks:
+        - net0
+      environment:
+        SPRING_KAFKA_APPLICATION_ID: simulation-service
+        SPRING_KAFKA_BOOTSTRAP_SERVERS: redpanda.internal.net:29092
+        SPRING_KAFKA_SECURITY_PROTOCOL: SASL_PLAINTEXT
+
   zilla:
     image: "ghcr.io/aklivity/zilla:latest"
     hostname: "zilla"
