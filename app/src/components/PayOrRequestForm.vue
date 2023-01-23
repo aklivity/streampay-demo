@@ -27,6 +27,7 @@
         label="Amount"
         type="number"
         v-model="amount"
+        step="any"
         lazy-rules
         outlined
         :rules="[
