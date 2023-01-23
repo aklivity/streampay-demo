@@ -14,7 +14,7 @@ This StreamPay app demo consists of 4 main components such as:
 
 ## Redpanda
 Redpanda servers both as event streaming source and database table to store information about users, transactions,
-and stats. Following topics will be created:
+and stats. Following topics are created:
 - `commands` - This topics get populated by Zilla API Gateway and responsible for processing commands
 such as `PayCommand`, `RequestCommand`.
 - `replies` - HTTP response for processed command should be posted to this topic for correlated response.
@@ -39,7 +39,7 @@ cd service
 ./mvnw clean install
 cd ..
 ```
-The above command will generate `streampay-service:develop-SNAPSHOT` and `streampay-simulation:develop-SNAPSHOT` images.
+The above command generates `streampay-service:develop-SNAPSHOT` and `streampay-simulation:develop-SNAPSHOT` images.
 
 ### Build the data simulation
 
@@ -48,7 +48,6 @@ cd simulation
 ./mvnw clean install
 cd ..
 ```
-
 
 ## StreamPay UI
 This app is build using `Vue.js` and `Quasar` frameworks and contains user authentication component as well
@@ -64,10 +63,10 @@ quasar build
 cd ..
 ```
 
-The above command will generate `dist` folder with all the necessary files to be hosted by Zilla API Gateway.
+The above command generates `dist` folder with all the necessary files to be hosted by Zilla API Gateway.
 
 ## Zilla API Gateway
-Zilla API Gateway will be hosting both app UI and APIs. Following endpoints are configured in `zilla.jon`
+Zilla API Gateway hosts both app UI and APIs. Following endpoints are configured in `zilla.jon`
 
 | Protocol | Method | Endpoint          | Topic            |
 |----------|--------|-------------------|------------------|
