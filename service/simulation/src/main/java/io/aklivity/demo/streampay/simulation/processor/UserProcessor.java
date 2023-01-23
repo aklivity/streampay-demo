@@ -21,7 +21,8 @@ public class UserProcessor implements Processor<String, User, String, User>
 
 
     @Override
-    public void process(Record record)
+    public void process(
+        Record record)
     {
         final String key = (String) record.key();
         final User user = (User) record.value();
