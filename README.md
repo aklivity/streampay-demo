@@ -30,9 +30,9 @@ to the appropriate topics. It also has statistic topologies that builds activiti
 `transactions`, and `payment-requests`
 
 ### Build the service
-All components are launched from docker stack defined in `stack.yaml`, however, `stream` and `simulation` services which have reference to
-`image: "streampay-stream:develop-SNAPSHOT"` and `image: "streampay-simulation:develop-SNAPSHOT` should be built locally.
-Please run the below command to build the images.
+All components are launched from docker stack defined in `stack.yaml`, however, `streampay-stream` and `streampay-simulation`
+services which have reference to `image: "streampay-stream:develop-SNAPSHOT"` and `image: "streampay-simulation:develop-SNAPSHOT`
+should be built locally. Please run the below command to build the images.
 
 ```shell
 cd service
