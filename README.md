@@ -41,14 +41,6 @@ cd ..
 ```
 The above command generates `streampay-service:develop-SNAPSHOT` and `streampay-simulation:develop-SNAPSHOT` images.
 
-### Build the data simulation
-
-```shell
-cd simulation
-./mvnw clean install
-cd ..
-```
-
 ## StreamPay UI
 This app is build using `Vue.js` and `Quasar` frameworks and contains user authentication component as well
 which uses Auth0 platform.
