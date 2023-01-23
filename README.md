@@ -30,15 +30,16 @@ to the appropriate topics. It also has statistic topologies that builds activiti
 `transactions`, and `payment-requests`
 
 ### Build the service
-All components are launched from docker stack defined in `stack.yaml` however, streampay-service is reference to
-`image: "streampay-service:develop-SNAPSHOT"` which should be build locally. Please run the below command to build image.
+All components are launched from docker stack defined in `stack.yaml`, however, `stream` and `simulation` services which have reference to
+`image: "streampay-stream:develop-SNAPSHOT"` and `image: "streampay-simulation:develop-SNAPSHOT` should be built locally.
+Please run the below command to build the images.
 
 ```shell
 cd service
 ./mvnw clean install
 cd ..
 ```
-The above command will generate `streampay-service:develop-SNAPSHOT` image.
+The above command will generate `streampay-service:develop-SNAPSHOT` and `streampay-simulation:develop-SNAPSHOT` images.
 
 ### Build the data simulation
 
@@ -47,7 +48,7 @@ cd simulation
 ./mvnw clean install
 cd ..
 ```
-The above command will generate `simulation:develop-SNAPSHOT` image.
+
 
 ## StreamPay UI
 This app is build using `Vue.js` and `Quasar` frameworks and contains user authentication component as well

@@ -1,4 +1,3 @@
 .idea
 
-
-service/streampay-service.iml
+*.iml
