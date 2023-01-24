@@ -183,7 +183,7 @@ export default defineComponent({
   },
   methods: {
     updateBalance(newBalance: number) {
-      this.balance = newBalance;
+      this.balance = Math.round(newBalance * 100) / 100;
     },
     async fetchAndSetUsers(userId = null) {
       const accessToken = await this.auth0.getAccessTokenSilently();

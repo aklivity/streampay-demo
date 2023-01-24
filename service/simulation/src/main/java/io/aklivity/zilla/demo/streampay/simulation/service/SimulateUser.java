@@ -23,7 +23,7 @@ public class SimulateUser
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(SimulateUser.class);
     private Map<String, User> users = new HashMap<>();
-    private int numberOfUsers = 0;
+    private Map<String, User> virtualUsers = new HashMap<>();
 
     @Value("${users.topic:users}")
     String usersTopic;
@@ -37,12 +37,18 @@ public class SimulateUser
     @Autowired
     private KafkaTemplate<String, Object> kafkaTemplate;
 
-    public int randomVirtualUserId()
+    public User randomVirtualUser()
     {
-        return random.nextInt(0, numberOfUsers);
+        String userId = null;
+        if (!virtualUsers.isEmpty())
+        {
+            Object[] keys = virtualUsers.keySet().toArray();
+            userId = (String) keys[random.nextInt(keys.length)];
+        }
+        return virtualUsers.get(userId);
     }
 
-    public String randomRealUserId()
+    public User randomRealUser()
     {
         String userId = null;
         if (!users.isEmpty())
@@ -50,7 +56,7 @@ public class SimulateUser
             Object[] keys = users.keySet().toArray();
             userId = (String) keys[random.nextInt(keys.length)];
         }
-        return userId;
+        return users.get(userId);
     }
 
     public void insertUser(
@@ -66,12 +72,12 @@ public class SimulateUser
         final String userId = virtualUser.getId();
         kafkaTemplate.send(usersTopic, userId, virtualUser);
         LOGGER.info("Virtual User Created - {}", virtualUser.getName());
-        numberOfUsers++;
+        virtualUsers.put(userId, virtualUser);
     }
 
     private User createVirtualUser()
     {
-        final String userId = String.format("virtual-user-%d", numberOfUsers);
+        final String userId = String.format("virtual-user-%d", virtualUsers.size());
 
         return User.builder()
             .id(userId)

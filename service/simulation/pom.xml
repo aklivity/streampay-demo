@@ -75,9 +75,6 @@
                             <alias>${project.artifactId}</alias>
                             <name>streampay-${project.artifactId}:%v</name>
                             <build>
-                                <tags>
-                                    <tag>latest</tag>
-                                </tags>
                                 <createImageOptions>
                                     <platform>linux/x86_64</platform>
                                 </createImageOptions>

@@ -149,7 +149,7 @@ export default defineComponent({
       this.request = currentRequests < 0 ? 0 : currentRequests;
     },
     updateBalance(newBalance: number) {
-      this.balance = newBalance;
+      this.balance = Math.round(newBalance * 100) / 100;
     },
     async updateUser() {
       const accessToken = await this.auth0.getAccessTokenSilently();

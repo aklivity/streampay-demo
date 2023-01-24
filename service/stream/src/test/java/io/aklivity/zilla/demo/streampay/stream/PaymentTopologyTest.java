@@ -34,7 +34,10 @@ import org.springframework.kafka.support.serializer.JsonSerializer;
 import io.aklivity.zilla.demo.streampay.data.model.Balance;
 import io.aklivity.zilla.demo.streampay.data.model.Command;
 import io.aklivity.zilla.demo.streampay.data.model.PayCommand;
+import io.aklivity.zilla.demo.streampay.data.model.PaymentRequest;
+import io.aklivity.zilla.demo.streampay.data.model.RequestCommand;
 import io.aklivity.zilla.demo.streampay.data.model.Transaction;
+import io.aklivity.zilla.demo.streampay.data.model.User;
 import io.confluent.kafka.serializers.KafkaJsonDeserializer;
 
 public class PaymentTopologyTest
@@ -44,12 +47,15 @@ public class PaymentTopologyTest
     private static final String PAYMENT_REQUESTS_TOPIC = "payment-requests";
     private static final String TRANSACTIONS_TOPIC = "transactions";
     private static final String BALANCES_TOPIC = "balances";
+    private static final String USERS_TOPIC = "users";
 
     private TopologyTestDriver testDriver;
 
     private TestInputTopic<String, Command> commandsInTopic;
     private TestInputTopic<String, Transaction> transactionsInTopic;
+    private TestInputTopic<String, User> usersInTopic;
     private TestOutputTopic<String, Balance> balancesOutTopic;
+    private TestOutputTopic<String, PaymentRequest> requestsOutTopic;
 
     @BeforeEach
     public void setUp()
@@ -61,6 +67,7 @@ public class PaymentTopologyTest
         stream.paymentRequestsTopic = PAYMENT_REQUESTS_TOPIC;
         stream.balancesTopic = BALANCES_TOPIC;
         stream.transactionsTopic = TRANSACTIONS_TOPIC;
+        stream.usersTopic = USERS_TOPIC;
         stream.buildPipeline(builder);
         final Topology topology = builder.build();
 
@@ -73,12 +80,19 @@ public class PaymentTopologyTest
                 new StringSerializer(), new JsonSerializer<>());
         commandsInTopic = testDriver.createInputTopic(COMMANDS_TOPIC,
             new StringSerializer(), new JsonSerializer<>());
+        usersInTopic = testDriver.createInputTopic(USERS_TOPIC,
+            new StringSerializer(), new JsonSerializer<>());
 
         StringDeserializer keyDeserializer = new StringDeserializer();
         KafkaJsonDeserializer<Balance> balanceDeserializer = new KafkaJsonDeserializer<>();
         balanceDeserializer.configure(Collections.emptyMap(), false);
         balancesOutTopic = testDriver.createOutputTopic(BALANCES_TOPIC,
             keyDeserializer, balanceDeserializer);
+
+        KafkaJsonDeserializer<PaymentRequest> requestDeserializer = new KafkaJsonDeserializer<>();
+        requestDeserializer.configure(Collections.emptyMap(), false);
+        requestsOutTopic = testDriver.createOutputTopic(PAYMENT_REQUESTS_TOPIC,
+            keyDeserializer, requestDeserializer);
     }
 
     @AfterEach
@@ -115,19 +129,33 @@ public class PaymentTopologyTest
     @Test
     public void shouldProcessRequestCommand()
     {
+        usersInTopic.pipeInput(new TestRecord<>("alice", User.builder()
+            .id("alice")
+            .name("Alice")
+            .username("alice")
+            .build()));
+        usersInTopic.pipeInput(new TestRecord<>("bob", User.builder()
+            .id("bob")
+            .name("Bob")
+            .username("bob")
+            .build()));
+
         final Headers headers = new RecordHeaders(
             new Header[]{
                 new RecordHeader("zilla:domain-model", "RequestCommand".getBytes()),
-                new RecordHeader("zilla:identity", "user1".getBytes()),
+                new RecordHeader("zilla:identity", "alice".getBytes()),
                 new RecordHeader("zilla:correlation-id", "1".getBytes()),
-                new RecordHeader("idempotency-key", "pay1".getBytes()),
-                new RecordHeader(":path", "/pay".getBytes())
+                new RecordHeader("idempotency-key", "request1".getBytes()),
+                new RecordHeader(":path", "/request".getBytes())
             });
 
-        commandsInTopic.pipeInput(new TestRecord<>("pay1", PayCommand.builder()
-            .userId("user2")
+        commandsInTopic.pipeInput(new TestRecord<>("alice", RequestCommand.builder()
+            .userId("bob")
             .amount(123)
             .notes("test")
             .build(), headers));
+
+        List<KeyValue<String, PaymentRequest>> requests = requestsOutTopic.readKeyValuesToList();
+        assertEquals(1, requests.size());
     }
 }
