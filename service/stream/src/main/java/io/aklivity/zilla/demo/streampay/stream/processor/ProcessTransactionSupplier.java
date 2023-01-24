@@ -3,6 +3,9 @@
  */
 package io.aklivity.zilla.demo.streampay.stream.processor;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.header.internals.RecordHeaders;
@@ -14,7 +17,6 @@ import org.apache.kafka.streams.state.KeyValueStore;
 
 import io.aklivity.zilla.demo.streampay.data.model.Balance;
 import io.aklivity.zilla.demo.streampay.data.model.Transaction;
-
 
 public class ProcessTransactionSupplier implements ProcessorSupplier<String, Transaction, String, Transaction>
 {
@@ -56,7 +58,8 @@ public class ProcessTransactionSupplier implements ProcessorSupplier<String, Tra
             balanceRecordHeaders.add(new RecordHeader("content-type", "application/json".getBytes()));
             final String userId = record.key();
             double currentBalance = balanceStore.get(userId) == null ? 0 : balanceStore.get(userId).getBalance();
-            final double newBalanceValue = Double.sum(currentBalance, record.value().getAmount());
+            final double newBalanceValue = new BigDecimal(Double.sum(currentBalance, record.value().getAmount()))
+                .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
             final Balance newBalance = Balance.builder().balance(newBalanceValue).timestamp(record.timestamp()).build();
             final Record<String, Balance> newBalanceRecord = new Record<>(userId,
                 newBalance, record.timestamp(), balanceRecordHeaders);
