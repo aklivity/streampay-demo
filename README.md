@@ -2,6 +2,7 @@
 This StreamPay app demo consists of 4 main components such as:
 
 - Redpanda.
+- Redpanda Console.
 - Event processing service written using `Spring Boot`.
 - Zilla API Gateway that hosts both app web interface and APIs.
 - StreamPay app UI
@@ -13,7 +14,7 @@ This StreamPay app demo consists of 4 main components such as:
 
 
 ## Redpanda
-Redpanda servers both as event streaming source and database table to store information about users, transactions,
+Redpanda serves both as event streaming source and database table to store information about users, transactions,
 and stats. Following topics are created:
 - `commands` - This topics get populated by Zilla API Gateway and responsible for processing commands
 such as `PayCommand`, `RequestCommand`.
@@ -23,6 +24,11 @@ such as `PayCommand`, `RequestCommand`.
 - `balances` - Tracks latest balance of a user comping from transactions table.
 - `payment-requests` - Store payments requested by the user.
 - `users` - Stores information about users(logcompacted topic).
+
+## Redpanda Console
+Redpanda Console is a developer-friendly UI for managing your Kafka/Redpanda workloads. Console gives you a simple,
+interactive approach for gaining visibility into your topics, masking data, managing consumer groups, and exploring 
+real-time data with time-travel debugging.
 
 ## Event Processing Service
 This service responsible for processing commands such as `PayCommand`, `RequestCommand` and producing messages
