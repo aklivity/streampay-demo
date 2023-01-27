@@ -20,6 +20,7 @@ import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 import io.aklivity.zilla.demo.streampay.data.model.PaymentRequest;
+import io.aklivity.zilla.demo.streampay.data.model.User;
 
 @Service
 public class SimulatePaymentRequest
@@ -65,24 +66,26 @@ public class SimulatePaymentRequest
 
     private PaymentRequest creatPaymentRequestForVirtualUser()
     {
-        final int fromUserId = simulateUser.randomVirtualUserId();
-        final int toUserId = simulateUser.randomVirtualUserId();
+        final User fromUser = simulateUser.randomVirtualUser();
+        final User toUser = simulateUser.randomVirtualUser();
         final double amount = BigDecimal.valueOf(random.nextDouble(1, 500))
             .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
 
         PaymentRequest paymentRequest = null;
 
-        if (fromUserId != toUserId)
+        if (fromUser != toUser)
         {
             paymentRequest = PaymentRequest.builder()
                 .amount(amount)
-                .fromUserId(String.format("virtual-user-%d", fromUserId))
-                .toUserId(String.format("virtual-user-%d", toUserId))
+                .fromUserId(fromUser.getId())
+                .fromUserName(fromUser.getName())
+                .toUserId(toUser.getId())
+                .toUserName(toUser.getName())
                 .notes("Please")
                 .timestamp(Instant.now().toEpochMilli())
                 .build();
 
-            LOGGER.info("Payment Requested from {} to {}", fromUserId, toUserId);
+            LOGGER.info("Payment Requested from {} to {}", fromUser, toUser);
         }
 
 
@@ -91,24 +94,26 @@ public class SimulatePaymentRequest
 
     private PaymentRequest creatPaymentRequestForRealUser()
     {
-        final int fromUserId = simulateUser.randomVirtualUserId();
-        final String toUserId = simulateUser.randomRealUserId();
-        final double amount = new BigDecimal(random.nextDouble(1, 500))
+        final User fromUser = simulateUser.randomVirtualUser();
+        final User toUser = simulateUser.randomRealUser();
+        final double amount = BigDecimal.valueOf(random.nextDouble(1, 500))
             .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
 
         PaymentRequest paymentRequest = null;
 
-        if (toUserId != null)
+        if (toUser != null)
         {
             paymentRequest = PaymentRequest.builder()
                 .amount(amount)
-                .fromUserId(String.format("virtual-user-%d", fromUserId))
-                .toUserId(toUserId)
+                .fromUserId(fromUser.getId())
+                .fromUserName(fromUser.getName())
+                .toUserId(toUser.getId())
+                .toUserName(toUser.getName())
                 .notes("Please send me some money")
                 .timestamp(Instant.now().toEpochMilli())
                 .build();
 
-            LOGGER.info("Payment Requested from {} to {}", fromUserId, toUserId);
+            LOGGER.info("Payment Requested from {} to {}", fromUser, toUser.getId());
         }
 
 

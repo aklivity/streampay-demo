@@ -23,11 +23,13 @@ import io.aklivity.zilla.demo.streampay.data.model.PayCommand;
 import io.aklivity.zilla.demo.streampay.data.model.PaymentRequest;
 import io.aklivity.zilla.demo.streampay.data.model.RequestCommand;
 import io.aklivity.zilla.demo.streampay.data.model.Transaction;
+import io.aklivity.zilla.demo.streampay.data.model.User;
 
 public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Command, String, Command>
 {
 
     private final String balanceStoreName;
+    private final String userStoreName;
     private final String replyTo;
     private final String transactionName;
     private final String paymentRequestsName;
@@ -40,11 +42,13 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
 
     public ProcessValidCommandSupplier(
         String balanceStoreName,
+        String userStoreName,
         String replyTo,
         String transactionName,
         String paymentRequestsName)
     {
         this.balanceStoreName = balanceStoreName;
+        this.userStoreName = userStoreName;
         this.transactionName = transactionName;
         this.paymentRequestsName = paymentRequestsName;
         this.replyTo = replyTo;
@@ -61,6 +65,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
         private ProcessorContext context;
 
         private KeyValueStore<String, Balance> balanceStore;
+        private KeyValueStore<String, User> userStore;
 
         private final Map<Class<?>, CommandProcessor> processors =
             Map.of(
@@ -74,6 +79,7 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
         {
             this.context = context;
             this.balanceStore = context.getStateStore(balanceStoreName);
+            this.userStore = context.getStateStore(userStoreName);
         }
 
         @Override
@@ -174,16 +180,23 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
 
             final Headers paymentRequestsRecordHeaders = new RecordHeaders();
             paymentRequestsRecordHeaders.add(new RecordHeader("content-type", "application/json".getBytes()));
-            paymentRequestsRecordHeaders.add(new RecordHeader("zilla:identity", requestCommand.getUserId().getBytes()));
+            String toUserId = requestCommand.getUserId();
+            paymentRequestsRecordHeaders.add(new RecordHeader("zilla:identity", toUserId.getBytes()));
 
             newResponseHeaders.add(":status", "200".getBytes());
             final Record reply = record.withHeaders(newResponseHeaders).withValue(Strings.EMPTY);
             context.forward(reply, replyTo);
 
+            String fromUserId = new String(userId.value());
+            final String fromUserName = userStore.get(fromUserId).getName();
+            final String toUserName = userStore.get(toUserId).getName();
+
             final Record paymentRequest = new Record(UUID.randomUUID().toString(),
                 PaymentRequest.builder()
-                    .fromUserId(new String(userId.value()))
-                    .toUserId(requestCommand.getUserId())
+                    .fromUserId(fromUserId)
+                    .fromUserName(fromUserName)
+                    .toUserId(toUserId)
+                    .toUserName(toUserName)
                     .amount(requestCommand.getAmount())
                     .notes(requestCommand.getNotes())
                     .timestamp(record.timestamp())

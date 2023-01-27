@@ -17,8 +17,10 @@ import io.aklivity.zilla.demo.streampay.data.model.Balance;
 import io.aklivity.zilla.demo.streampay.data.model.Command;
 import io.aklivity.zilla.demo.streampay.data.model.PaymentRequest;
 import io.aklivity.zilla.demo.streampay.data.model.Transaction;
+import io.aklivity.zilla.demo.streampay.data.model.User;
 import io.aklivity.zilla.demo.streampay.data.serde.SerdeFactory;
 import io.aklivity.zilla.demo.streampay.stream.processor.ProcessTransactionSupplier;
+import io.aklivity.zilla.demo.streampay.stream.processor.ProcessUserSupplier;
 import io.aklivity.zilla.demo.streampay.stream.processor.ProcessValidCommandSupplier;
 import io.aklivity.zilla.demo.streampay.stream.processor.RejectInvalidCommandSupplier;
 import io.aklivity.zilla.demo.streampay.stream.processor.ValidateCommandSupplier;
@@ -32,6 +34,7 @@ public class PaymentTopology
     private final Serde<PaymentRequest> paymentRequestSerde = SerdeFactory.jsonSerdeFor(PaymentRequest.class, false);
     private final Serde<Transaction> transactionSerde = SerdeFactory.jsonSerdeFor(Transaction.class, false);
     private final Serde<Balance> balanceSerde = SerdeFactory.jsonSerdeFor(Balance.class, false);
+    private final Serde<User> userSerde = SerdeFactory.jsonSerdeFor(User.class, false);
 
     @Value("${commands.topic:commands}")
     String commandsTopic;
@@ -44,14 +47,20 @@ public class PaymentTopology
     @Value("${transactions.topic:transactions}")
     String transactionsTopic;
 
+    @Value("${users.topic:users}")
+    String usersTopic;
+
     private final String balanceStoreName = "Balance";
+    private final String userStoreName = "User";
     private final String idempotencyKeyStoreName = "IdempotencyKey";
     private final String commandsSource = "CommandsSource";
-    private final String transactionsSourceSource = "TransactionSource";
+    private final String transactionsSource = "TransactionSource";
+    private final String usersSource = "UserSource";
     private final String validateCommand = "ValidateCommand";
     private final String rejectInvalidCommand = "RejectInvalidCommand";
     private final String processValidCommand = "ProcessValidCommand";
     private final String processTransaction = "TransactionProcessor";
+    private final String processUser = "UserProcessor";
     private final String repliesSink = "RepliesSink";
     private final String transactionSink = "TransactionSink";
     private final String paymentRequestSink = "PaymentRequestsSink";
@@ -71,6 +80,11 @@ public class PaymentTopology
             stringSerde,
             balanceSerde);
 
+        final StoreBuilder usersStoreBuilder = Stores.keyValueStoreBuilder(
+            Stores.persistentKeyValueStore(userStoreName),
+            stringSerde,
+            userSerde);
+
         final StoreBuilder idempotencyKeyStoreBuilder = Stores.keyValueStoreBuilder(
             Stores.persistentKeyValueStore(idempotencyKeyStoreName),
             bytesSerde,
@@ -81,8 +95,8 @@ public class PaymentTopology
             .addProcessor(validateCommand, new ValidateCommandSupplier(
                 idempotencyKeyStoreName, processValidCommand, rejectInvalidCommand), commandsSource)
             .addProcessor(processValidCommand,
-                new ProcessValidCommandSupplier(balanceStoreName, repliesSink, transactionSink, paymentRequestSink),
-                validateCommand)
+                new ProcessValidCommandSupplier(balanceStoreName, userStoreName, repliesSink, transactionSink,
+                    paymentRequestSink), validateCommand)
             .addProcessor(rejectInvalidCommand, new RejectInvalidCommandSupplier(repliesSink),
                 validateCommand)
             .addSink(repliesSink, commandRepliesTopic, stringSerde.serializer(), stringSerde.serializer(),
@@ -91,12 +105,16 @@ public class PaymentTopology
                 processValidCommand)
             .addSink(paymentRequestSink, paymentRequestsTopic, stringSerde.serializer(), paymentRequestSerde.serializer(),
                 processValidCommand)
-            .addSource(transactionsSourceSource, stringSerde.deserializer(), transactionSerde.deserializer(),
+            .addSource(usersSource, stringSerde.deserializer(), userSerde.deserializer(),
+                usersTopic)
+            .addProcessor(processUser, new ProcessUserSupplier(userStoreName), usersSource)
+            .addSource(transactionsSource, stringSerde.deserializer(), transactionSerde.deserializer(),
                 transactionsTopic)
             .addProcessor(processTransaction, new ProcessTransactionSupplier(balanceStoreName, balancesSink),
-                transactionsSourceSource)
+                transactionsSource)
             .addSink(balancesSink, balancesTopic, stringSerde.serializer(), balanceSerde.serializer(), processTransaction)
             .addStateStore(balanceStoreBuilder, processTransaction, processValidCommand)
+            .addStateStore(usersStoreBuilder, processUser, processValidCommand)
             .addStateStore(idempotencyKeyStoreBuilder, validateCommand);
 
         System.out.println(topologyBuilder.describe());

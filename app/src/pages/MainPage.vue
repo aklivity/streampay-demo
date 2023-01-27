@@ -35,8 +35,11 @@
              key="amount"
              :props="props"
            >
-             <div class="text-subtitle1" :style="props.row.amount < 0 ? `color:red;` : 'color:green;'" >
-               {{ props.row.amount }}
+             <div v-if="props.row.eventName == 'PaymentSent'" class="text-subtitle1" style="color:red">
+               -${{ props.row.amount }}
+             </div>
+             <div v-else class="text-subtitle1" style="color:green" >
+               ${{ props.row.amount }}
              </div>
            </q-td>
          </q-tr>
@@ -112,13 +115,15 @@ export default defineComponent({
         const to = activity.toUserId == userId ? 'you' : activity.toUserName;
 
         const avatar = from.charAt(0).toUpperCase();
+        const eventName = activity.eventName;
 
-        activities.push({
+        activities.unshift({
+          eventName,
           avatar,
           from,
           to,
           state,
-          amount: activity.amount,
+          amount: Math.round(Math.abs(activity.amount) * 100) / 100,
           date: new Date (activity.timestamp)
         });
       }

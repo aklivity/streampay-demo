@@ -52,8 +52,8 @@ public class SimulatePayment
 
     private Transaction creatPaymentForVirtualUser()
     {
-        final int ownerId = simulateUser.randomVirtualUserId();
-        final int userId = simulateUser.randomVirtualUserId();
+        final String ownerId = simulateUser.randomVirtualUser().getId();
+        final String userId = simulateUser.randomVirtualUser().getId();
         final double amount = new BigDecimal(random.nextDouble(1, 200))
             .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
 
@@ -62,8 +62,8 @@ public class SimulatePayment
         {
             transaction = Transaction.builder()
                 .id(UUID.randomUUID())
-                .ownerId(String.format("virtual-user-%d", ownerId))
-                .userId(String.format("virtual-user-%d", userId))
+                .ownerId(ownerId)
+                .userId(userId)
                 .amount(amount)
                 .timestamp(Instant.now().toEpochMilli())
                 .build();
@@ -76,8 +76,8 @@ public class SimulatePayment
 
     private Transaction creatPaymentForRealUser()
     {
-        final String ownerId = simulateUser.randomRealUserId();
-        final int userId = simulateUser.randomVirtualUserId();
+        final String ownerId = simulateUser.randomRealUser().getId();
+        final String userId = simulateUser.randomVirtualUser().getId();
         final double amount = new BigDecimal(random.nextDouble(1, 200))
             .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
 
@@ -87,7 +87,7 @@ public class SimulatePayment
             transaction = Transaction.builder()
                 .id(UUID.randomUUID())
                 .ownerId(ownerId)
-                .userId(String.format("virtual-user-%d", userId))
+                .userId(userId)
                 .amount(amount)
                 .timestamp(Instant.now().toEpochMilli())
                 .build();

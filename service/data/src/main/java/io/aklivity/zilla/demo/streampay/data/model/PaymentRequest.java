@@ -15,7 +15,9 @@ import lombok.NoArgsConstructor;
 public class PaymentRequest
 {
     String fromUserId;
+    String fromUserName;
     String toUserId;
+    String toUserName;
     double amount;
     String notes;
     long timestamp;
