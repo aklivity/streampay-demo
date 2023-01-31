@@ -1,4 +1,4 @@
-name: build
+name: service
 
 on:
   push:
@@ -9,11 +9,16 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build Service
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         java: [ 17 ]
+
+    defaults:
+      run:
+        working-directory: service
 
     steps:
     - name: Checkout GitHub sources
@@ -32,4 +37,3 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
       run: ./mvnw -B -U -nsu -Ddocker.logStdout -Ddocker.verbose install
-      working-directory: service
