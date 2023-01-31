@@ -2,10 +2,11 @@ name: app
 
 on:
   push:
-    branches: [develop]
+    branches: [ main, 'feature/**'  ]
   pull_request:
-    branches: [develop]
+    branches: [ main, 'feature/**' ]
   workflow_dispatch:
+
 jobs:
   build:
     name: Build App
