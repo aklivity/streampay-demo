@@ -61,6 +61,7 @@ export default defineComponent({
     const auth0 = useAuth0();
 
     const tableRef = ref(null);
+    const requestStream = null as EventSource | null;
 
     const columns = [
       {
@@ -76,31 +77,32 @@ export default defineComponent({
     const requests = ref([] as any);
 
     return {
-      auth0: auth0,
+      auth0,
       tableRef,
       columns,
-      requests
+      requests,
+      requestStream
     }
   },
   async mounted() {
     const accessToken = await this.auth0.getAccessTokenSilently();
-    const requestStream = new EventSource(`${streamingUrl}/payment-requests?access_token=${accessToken}`);
+    this.requestStream = new EventSource(`${streamingUrl}/payment-requests?access_token=${accessToken}`);
     const requests = this.requests;
 
-    requestStream.onopen = function () {
+    this.requestStream.onopen = function () {
       requests.slice(0);
     }
 
-    requestStream.addEventListener('delete', (event: MessageEvent) => {
+    this.requestStream.addEventListener('delete', (event: MessageEvent) => {
       const lastEventId = JSON.parse(event.lastEventId?.toString());
-      const key = Buffer.from(lastEventId[0], "base64").toString("utf8");
+      const key = Buffer.from(lastEventId[0], 'base64').toString('utf8');
       const index = requests.findIndex((r: { id: string; }) => r.id === key);
       requests.splice(index, 1);
     }, false);
 
-    requestStream.onmessage = function (event: MessageEvent) {
+    this.requestStream.onmessage = function (event: MessageEvent) {
       const lastEventId = JSON.parse(event.lastEventId);
-      const key:string = Buffer.from(lastEventId[0], "base64").toString("utf8");
+      const key:string = Buffer.from(lastEventId[0], 'base64').toString('utf8');
       const paymentRequest = JSON.parse(event.data)
       requests.push({id: key, request: paymentRequest})
     };

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import io.aklivity.zilla.demo.streampay.data.model.Balance;
 import io.aklivity.zilla.demo.streampay.data.model.Command;
 import io.aklivity.zilla.demo.streampay.data.model.PaymentRequest;
+import io.aklivity.zilla.demo.streampay.data.model.TotalTransaction;
 import io.aklivity.zilla.demo.streampay.data.model.Transaction;
 import io.aklivity.zilla.demo.streampay.data.model.User;
 import io.aklivity.zilla.demo.streampay.data.serde.SerdeFactory;
@@ -35,6 +36,7 @@ public class PaymentTopology
     private final Serde<Transaction> transactionSerde = SerdeFactory.jsonSerdeFor(Transaction.class, false);
     private final Serde<Balance> balanceSerde = SerdeFactory.jsonSerdeFor(Balance.class, false);
     private final Serde<User> userSerde = SerdeFactory.jsonSerdeFor(User.class, false);
+    private final Serde<TotalTransaction> totalTransactionSerde = SerdeFactory.jsonSerdeFor(TotalTransaction.class, false);
 
     @Value("${commands.topic:commands}")
     String commandsTopic;
@@ -46,12 +48,18 @@ public class PaymentTopology
     String balancesTopic;
     @Value("${transactions.topic:transactions}")
     String transactionsTopic;
+    @Value("${total-transactions.topic:total-transactions}")
+    String totalTransactionsTopic;
 
+    @Value("${average-transaction.topic:average-transactions}")
+    String averageTransactionTopic;
     @Value("${users.topic:users}")
     String usersTopic;
 
     private final String balanceStoreName = "Balance";
     private final String userStoreName = "User";
+    private final String totalTransactionsStoreName = "TotalTransactions";
+    private final String totalTransactionAmountStoreName = "TotalTransactionAmount";
     private final String idempotencyKeyStoreName = "IdempotencyKey";
     private final String commandsSource = "CommandsSource";
     private final String transactionsSource = "TransactionSource";
@@ -65,6 +73,8 @@ public class PaymentTopology
     private final String transactionSink = "TransactionSink";
     private final String paymentRequestSink = "PaymentRequestsSink";
     private final String balancesSink = "BalancesSink";
+    private final String totalTransactionSink = "TotalTransactionSink";
+    private final String averageTransactionSink = "AverageTransactionSink";
 
     public PaymentTopology()
     {
@@ -84,6 +94,14 @@ public class PaymentTopology
             Stores.persistentKeyValueStore(userStoreName),
             stringSerde,
             userSerde);
+
+        final StoreBuilder totalTransactionStoreBuilder = Stores.keyValueStoreBuilder(
+            Stores.persistentKeyValueStore(totalTransactionsStoreName),
+            stringSerde, Serdes.Long());
+
+        final StoreBuilder totalTransactionAmountStoreBuilder = Stores.keyValueStoreBuilder(
+            Stores.persistentKeyValueStore(totalTransactionAmountStoreName),
+            stringSerde, Serdes.Double());
 
         final StoreBuilder idempotencyKeyStoreBuilder = Stores.keyValueStoreBuilder(
             Stores.persistentKeyValueStore(idempotencyKeyStoreName),
@@ -110,11 +128,18 @@ public class PaymentTopology
             .addProcessor(processUser, new ProcessUserSupplier(userStoreName), usersSource)
             .addSource(transactionsSource, stringSerde.deserializer(), transactionSerde.deserializer(),
                 transactionsTopic)
-            .addProcessor(processTransaction, new ProcessTransactionSupplier(balanceStoreName, balancesSink),
-                transactionsSource)
+            .addProcessor(processTransaction, new ProcessTransactionSupplier(balanceStoreName, balancesSink,
+                    totalTransactionsStoreName, totalTransactionSink, totalTransactionAmountStoreName,
+                    averageTransactionSink), transactionsSource)
             .addSink(balancesSink, balancesTopic, stringSerde.serializer(), balanceSerde.serializer(), processTransaction)
+            .addSink(totalTransactionSink, totalTransactionsTopic, stringSerde.serializer(),
+                totalTransactionSerde.serializer(), processTransaction)
+            .addSink(averageTransactionSink, averageTransactionTopic, stringSerde.serializer(),
+                stringSerde.serializer(), processTransaction)
             .addStateStore(balanceStoreBuilder, processTransaction, processValidCommand)
             .addStateStore(usersStoreBuilder, processUser, processValidCommand)
+            .addStateStore(totalTransactionStoreBuilder, processTransaction)
+            .addStateStore(totalTransactionAmountStoreBuilder, processTransaction)
             .addStateStore(idempotencyKeyStoreBuilder, validateCommand);
 
         System.out.println(topologyBuilder.describe());

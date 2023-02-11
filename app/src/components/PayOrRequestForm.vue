@@ -82,6 +82,7 @@ export default defineComponent({
     const amount = ref(0 as number);
     const notes = ref("" as string);
     const router = useRouter();
+    const balanceStream = null as EventSource | null;
 
     return {
       auth0,
@@ -92,6 +93,7 @@ export default defineComponent({
       userOptions,
       amount,
       notes,
+      balanceStream,
       async onPay () {
         if (balance.value - amount.value > 0) {
           const accessToken = await auth0.getAccessTokenSilently();
@@ -158,9 +160,9 @@ export default defineComponent({
     const authorization = { Authorization: `Bearer ${accessToken}` };
     const updateBalance = this.updateBalance;
 
-    const balanceStream = new EventSource(`${streamingUrl}/current-balance?access_token=${accessToken}`);
+    this.balanceStream = new EventSource(`${streamingUrl}/current-balance?access_token=${accessToken}`);
 
-    balanceStream.onmessage = function (event: MessageEvent) {
+    this.balanceStream.onmessage = function (event: MessageEvent) {
       const balance = JSON.parse(event.data);
       updateBalance(balance.balance);
     };
@@ -212,5 +214,8 @@ export default defineComponent({
         });
     }
   },
+  unmounted() {
+    this.balanceStream?.close();
+  }
 })
 </script>

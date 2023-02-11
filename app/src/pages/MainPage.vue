@@ -73,14 +73,16 @@ export default defineComponent({
     ]
 
     const activities = ref([] as any);
+    const activitiesStream = null as EventSource | null;
 
     return {
-      color: "text-red",
+      color: 'text-red',
       auth0,
       user: auth0.user,
       tableRef,
       columns,
       activities,
+      activitiesStream,
       pagination: {
         rowsPerPage: 0
       }
@@ -89,14 +91,14 @@ export default defineComponent({
   async mounted() {
     const accessToken = await this.auth0.getAccessTokenSilently();
     const userId = this.user.sub;
-    const activitiesStream = new EventSource(`${streamingUrl}/activities?access_token=${accessToken}`);
+    this.activitiesStream = new EventSource(`${streamingUrl}/activities?access_token=${accessToken}`);
     const activities = this.activities;
 
-    activitiesStream.onopen = function () {
+    this.activitiesStream.onopen = function () {
       activities.splice(0);
     }
 
-    activitiesStream.onmessage = function (event: MessageEvent) {
+    this.activitiesStream.onmessage = function (event: MessageEvent) {
       const activity = JSON.parse(event.data);
       if (activity.eventName == 'PaymentReceived' && activity.fromUserId == userId ||
         activity.eventName == 'PaymentSent' && activity.toUserId == userId) {
@@ -128,6 +130,9 @@ export default defineComponent({
         });
       }
     };
+  },
+  unmounted() {
+    this.activitiesStream?.close();
   }
 });
 </script>
