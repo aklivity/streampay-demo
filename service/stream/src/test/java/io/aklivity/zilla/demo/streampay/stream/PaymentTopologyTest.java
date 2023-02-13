@@ -46,6 +46,8 @@ public class PaymentTopologyTest
     private static final String COMMANDS_REPLIES_TOPIC = "replies";
     private static final String PAYMENT_REQUESTS_TOPIC = "payment-requests";
     private static final String TRANSACTIONS_TOPIC = "transactions";
+    private static final String TOTAL_TRANSACTIONS_TOPIC = "total-transactions";
+    private static final String AVERAGE_TRANSACTION_TOPIC = "average-transactions";
     private static final String BALANCES_TOPIC = "balances";
     private static final String USERS_TOPIC = "users";
 
@@ -55,6 +57,7 @@ public class PaymentTopologyTest
     private TestInputTopic<String, Transaction> transactionsInTopic;
     private TestInputTopic<String, User> usersInTopic;
     private TestOutputTopic<String, Balance> balancesOutTopic;
+    private TestOutputTopic<String, String> totalTransactionsOutTopic;
     private TestOutputTopic<String, PaymentRequest> requestsOutTopic;
 
     @BeforeEach
@@ -68,6 +71,8 @@ public class PaymentTopologyTest
         stream.balancesTopic = BALANCES_TOPIC;
         stream.transactionsTopic = TRANSACTIONS_TOPIC;
         stream.usersTopic = USERS_TOPIC;
+        stream.averageTransactionTopic = AVERAGE_TRANSACTION_TOPIC;
+        stream.totalTransactionsTopic = TOTAL_TRANSACTIONS_TOPIC;
         stream.buildPipeline(builder);
         final Topology topology = builder.build();
 
@@ -83,16 +88,19 @@ public class PaymentTopologyTest
         usersInTopic = testDriver.createInputTopic(USERS_TOPIC,
             new StringSerializer(), new JsonSerializer<>());
 
-        StringDeserializer keyDeserializer = new StringDeserializer();
+        StringDeserializer stringDeserializer = new StringDeserializer();
         KafkaJsonDeserializer<Balance> balanceDeserializer = new KafkaJsonDeserializer<>();
         balanceDeserializer.configure(Collections.emptyMap(), false);
         balancesOutTopic = testDriver.createOutputTopic(BALANCES_TOPIC,
-            keyDeserializer, balanceDeserializer);
+            stringDeserializer, balanceDeserializer);
+
+        totalTransactionsOutTopic = testDriver.createOutputTopic(TOTAL_TRANSACTIONS_TOPIC,
+            stringDeserializer, stringDeserializer);
 
         KafkaJsonDeserializer<PaymentRequest> requestDeserializer = new KafkaJsonDeserializer<>();
         requestDeserializer.configure(Collections.emptyMap(), false);
         requestsOutTopic = testDriver.createOutputTopic(PAYMENT_REQUESTS_TOPIC,
-            keyDeserializer, requestDeserializer);
+            stringDeserializer, requestDeserializer);
     }
 
     @AfterEach
@@ -124,6 +132,8 @@ public class PaymentTopologyTest
             .build(), headers));
         List<KeyValue<String, Balance>> balances = balancesOutTopic.readKeyValuesToList();
         assertEquals(3, balances.size());
+        List<KeyValue<String, String>> totalValues = totalTransactionsOutTopic.readKeyValuesToList();
+        assertEquals(2, totalValues.size());
     }
 
     @Test

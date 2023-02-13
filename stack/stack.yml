@@ -53,8 +53,11 @@ services:
       rpk topic create commands --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
       rpk topic create replies --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
       rpk topic create transactions --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
+      rpk topic create total-transactions --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
+      rpk topic create average-transactions --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
       rpk topic create activities --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
       rpk topic create balances -c cleanup.policy=compact --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
+      rpk topic create balance-histories --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
       rpk topic create payment-requests -c cleanup.policy=compact --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
       rpk topic create users -c cleanup.policy=compact --brokers redpanda.internal.net:29092 --user user --password redpanda --sasl-mechanism SCRAM-SHA-256
       "

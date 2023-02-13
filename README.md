@@ -66,16 +66,18 @@ The above command generates `dist` folder with all the necessary files to be hos
 ## Zilla API Gateway
 Zilla API Gateway hosts both app UI and APIs. Following endpoints are configured in `zilla.jon`
 
-| Protocol | Method | Endpoint          | Topic            |
-|----------|--------|-------------------|------------------|
-| SSE      | GET    | /activities       | activities       |
-| SSE      | GET    | /payment-requests | payment-requests |
-| SSE      | GET    | /current-balance  | balances         |
-| HTTP     | POST   | /pay              | commands         |
-| HTTP     | POST   | /request          | commands         |
-| HTTP     | PUT    | /current-user     | users            |
-| HTTP     | GET    | /current-user     | users            |
-| HTTP     | GET    | /users            | users            |
+| Protocol | Method | Endpoint              | Topic                |
+|----------|--------|-----------------------|----------------------|
+| SSE      | GET    | /activities           | activities           |
+| SSE      | GET    | /payment-requests     | payment-requests     |
+| SSE      | GET    | /current-balance      | balances             |
+| SSE      | GET    | /total-transactions   | total-transactions   |
+| SSE      | GET    | /average-transactions | average-transactions |
+| SSE      | GET    | /balance-histories    | balance-histories    |
+| HTTP     | POST   | /pay                  | commands             |
+| HTTP     | POST   | /request              | commands             |
+| HTTP     | PUT    | /current-user         | users                |
+| HTTP     | GET    | /users                | users                |
 
 
 ## Launch the stack

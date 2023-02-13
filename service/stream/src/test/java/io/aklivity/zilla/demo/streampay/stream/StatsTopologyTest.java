@@ -39,6 +39,8 @@ public class StatsTopologyTest
     private static final String TRANSACTIONS_TOPIC = "transactions";
     private static final String ACTIVITIES_TOPIC = "activities";
     private static final String USERS_TOPIC = "users";
+    private static final String BALANCES_TOPIC = "balances";
+    private static final String BALANCE_HISTORIES_TOPIC = "balance-histories";
 
     private TopologyTestDriver testDriver;
 
@@ -56,6 +58,8 @@ public class StatsTopologyTest
         stream.transactionsTopic = TRANSACTIONS_TOPIC;
         stream.activitiesTopic = ACTIVITIES_TOPIC;
         stream.usersTopic = USERS_TOPIC;
+        stream.balancesTopic = BALANCES_TOPIC;
+        stream.balanceHistoriesTopic = BALANCE_HISTORIES_TOPIC;
         stream.buildPipeline(builder);
         final Topology topology = builder.build();
 

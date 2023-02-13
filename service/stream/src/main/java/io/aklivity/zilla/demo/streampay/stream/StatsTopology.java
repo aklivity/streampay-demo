@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import io.aklivity.zilla.demo.streampay.data.model.Balance;
 import io.aklivity.zilla.demo.streampay.data.model.Event;
 import io.aklivity.zilla.demo.streampay.data.model.PaymentRequest;
 import io.aklivity.zilla.demo.streampay.data.model.Transaction;
@@ -34,6 +35,7 @@ public class StatsTopology
     private final Serde<Transaction> transactionSerde = SerdeFactory.jsonSerdeFor(Transaction.class, false);
     private final Serde<Event> eventSerde = SerdeFactory.jsonSerdeFor(Event.class, false);
     private final Serde<User> userSerde = SerdeFactory.jsonSerdeFor(User.class, false);
+    private final Serde<Balance> balanceSerde = SerdeFactory.jsonSerdeFor(Balance.class, false);
 
     @Value("${payment.requests.topic:payment-requests}")
     String paymentRequestsTopic;
@@ -46,6 +48,12 @@ public class StatsTopology
 
     @Value("${users.topic:users}")
     String usersTopic;
+
+    @Value("${balances.topic:balances}")
+    String balancesTopic;
+
+    @Value("${balances.topic:balance-histories}")
+    String balanceHistoriesTopic;
 
     public StatsTopology()
     {
@@ -124,5 +132,8 @@ public class StatsTopology
                 return event;
             })
             .to(activitiesTopic);
+
+        satsKafkaStreamsBuilder.stream(balancesTopic, Consumed.with(stringSerde, balanceSerde))
+            .to(balanceHistoriesTopic, Produced.with(stringSerde, balanceSerde));
     }
 }
