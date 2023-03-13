@@ -87,7 +87,6 @@ public class SimulatePayment
         {
             transaction = Transaction.builder()
                 .id(UUID.randomUUID())
-
                 .ownerId(owner.getId())
                 .userId(user.getId())
                 .amount(amount)
