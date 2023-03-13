@@ -53,23 +53,23 @@ public class SimulatePayment
 
     private Transaction creatPaymentForVirtualUser()
     {
-        final String ownerId = simulateUser.randomVirtualUser().getId();
-        final String userId = simulateUser.randomVirtualUser().getId();
+        final User owner = simulateUser.randomVirtualUser();
+        final User user = simulateUser.randomVirtualUser();
         final double amount = new BigDecimal(random.nextDouble(1, 200))
             .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
 
         Transaction transaction = null;
-        if (ownerId != userId)
+        if (owner != user)
         {
             transaction = Transaction.builder()
                 .id(UUID.randomUUID())
-                .ownerId(ownerId)
-                .userId(userId)
+                .ownerId(owner.getId())
+                .userId(user.getId())
                 .amount(amount)
                 .timestamp(Instant.now().toEpochMilli())
                 .build();
 
-            LOGGER.info("Payment made from {} to {}", ownerId, userId);
+            LOGGER.info("Payment made from {} to {}", owner.getId(), user.getId());
         }
 
         return transaction;
@@ -77,23 +77,24 @@ public class SimulatePayment
 
     private Transaction creatPaymentForRealUser()
     {
-        final User ownerId = simulateUser.randomRealUser();
-        final User userId = simulateUser.randomVirtualUser();
+        final User owner = simulateUser.randomRealUser();
+        final User user = simulateUser.randomVirtualUser();
         final double amount = new BigDecimal(random.nextDouble(1, 200))
             .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
 
         Transaction transaction = null;
-        if (ownerId != null)
+        if (owner != null)
         {
             transaction = Transaction.builder()
                 .id(UUID.randomUUID())
-                .ownerId(ownerId.getId())
+
+                .ownerId(owner.getId())
+                .userId(user.getId())
                 .amount(amount)
                 .timestamp(Instant.now().toEpochMilli())
-                .userId(userId.getId())
                 .build();
 
-            LOGGER.info("Payment made from {} to {}", ownerId, userId);
+            LOGGER.info("Payment made from {} to {}", owner.getId(), user.getId());
         }
 
         return transaction;
