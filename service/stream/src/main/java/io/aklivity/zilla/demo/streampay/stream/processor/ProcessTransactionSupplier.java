@@ -74,16 +74,19 @@ public class ProcessTransactionSupplier implements ProcessorSupplier<String, Tra
             final Headers balanceRecordHeaders = new RecordHeaders();
             balanceRecordHeaders.add(new RecordHeader("content-type", "application/json".getBytes()));
             final String userId = record.key();
-            double currentBalance = userId == null || balanceStore.get(userId) == null ? 0 :
-                balanceStore.get(userId).getBalance();
-            double amount = record.value().getAmount();
-            final double newBalanceValue = new BigDecimal(Double.sum(currentBalance, amount))
-                .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
-            final Balance newBalance = Balance.builder().balance(newBalanceValue).timestamp(record.timestamp()).build();
-            final Record<String, Balance> newBalanceRecord = new Record<>(userId,
-                newBalance, record.timestamp(), balanceRecordHeaders);
-            context.forward(newBalanceRecord, balanceName);
-            balanceStore.put(userId, newBalance);
+            double amount = 0;
+            if (userId != null)
+            {
+                double currentBalance = balanceStore.get(userId) == null ? 0 : balanceStore.get(userId).getBalance();
+                amount = record.value().getAmount();
+                final double newBalanceValue = new BigDecimal(Double.sum(currentBalance, amount))
+                    .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
+                final Balance newBalance = Balance.builder().balance(newBalanceValue).timestamp(record.timestamp()).build();
+                final Record<String, Balance> newBalanceRecord = new Record<>(userId,
+                    newBalance, record.timestamp(), balanceRecordHeaders);
+                context.forward(newBalanceRecord, balanceName);
+                balanceStore.put(userId, newBalance);
+            }
 
             if (amount >= 0)
             {
