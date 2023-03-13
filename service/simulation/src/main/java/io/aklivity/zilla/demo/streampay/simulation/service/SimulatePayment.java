@@ -17,6 +17,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import io.aklivity.zilla.demo.streampay.data.model.Transaction;
+import io.aklivity.zilla.demo.streampay.data.model.User;
 
 @Service
 public class SimulatePayment
@@ -76,8 +77,8 @@ public class SimulatePayment
 
     private Transaction creatPaymentForRealUser()
     {
-        final String ownerId = simulateUser.randomRealUser().getId();
-        final String userId = simulateUser.randomVirtualUser().getId();
+        final User ownerId = simulateUser.randomRealUser();
+        final User userId = simulateUser.randomVirtualUser();
         final double amount = new BigDecimal(random.nextDouble(1, 200))
             .setScale(2, RoundingMode.HALF_DOWN).doubleValue();
 
@@ -86,10 +87,10 @@ public class SimulatePayment
         {
             transaction = Transaction.builder()
                 .id(UUID.randomUUID())
-                .ownerId(ownerId)
-                .userId(userId)
+                .ownerId(ownerId.getId())
                 .amount(amount)
                 .timestamp(Instant.now().toEpochMilli())
+                .userId(userId.getId())
                 .build();
 
             LOGGER.info("Payment made from {} to {}", ownerId, userId);
