@@ -54,7 +54,7 @@ public class SimulationTopology
         StreamsBuilder simulationKafkaStreamsBuilder)
     {
         simulationKafkaStreamsBuilder.stream(usersTopic, Consumed.with(stringSerde, userSerde))
-                .filter((key, value) -> !key.startsWith("virtual-user"))
+                .filter((key, value) -> !key.startsWith("virtual-user") && value != null)
                 .process(() -> new UserProcessor(simulateUser));
 
 

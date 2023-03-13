@@ -53,7 +53,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, ref, toRefs} from 'vue'
+import {defineComponent, ref, toRefs, watch} from 'vue'
 import {api, streamingUrl} from "boot/axios";
 import {useQuasar} from "quasar";
 import {useRouter} from "vue-router";
@@ -156,36 +156,53 @@ export default defineComponent({
     }
   },
   async mounted() {
-    const accessToken = await this.auth0.getAccessTokenSilently();
-    const authorization = { Authorization: `Bearer ${accessToken}` };
+    const auth0 = this.auth0;
     const updateBalance = this.updateBalance;
+    const updateAmount = this.updateAmount;
+    const formRequestId = this.formRequestId;
+    const fetchAndSetUsers = this.fetchAndSetUsers;
+    let balanceStream = this.balanceStream;
 
-    this.balanceStream = new EventSource(`${streamingUrl}/current-balance?access_token=${accessToken}`);
+    async function readBalance() {
+      const accessToken = await auth0.getAccessTokenSilently();
+      const authorization = { Authorization: `Bearer ${accessToken}` };
+      balanceStream = new EventSource(`${streamingUrl}/current-balance?access_token=${accessToken}`);
 
-    this.balanceStream.onmessage = function (event: MessageEvent) {
-      const balance = JSON.parse(event.data);
-      updateBalance(balance.balance);
-    };
+      balanceStream.onmessage = function (event: MessageEvent) {
+        const balance = JSON.parse(event.data);
+        updateBalance(balance.balance);
+      };
 
-    if (this.formRequestId) {
-      api.get('/payment-requests/' + this.formRequestId,{
+      if (formRequestId) {
+        api.get('/payment-requests/' + formRequestId,{
           headers: {
             ...authorization
           }
         })
-        .then((response) => {
-          const request = response.data;
-          this.amount = request.amount;
+          .then((response) => {
+            const request = response.data;
+            updateAmount(request.amount);
 
-          this.fetchAndSetUsers(request.fromUserId);
-        })
-    } else {
-      await this.fetchAndSetUsers();
+            fetchAndSetUsers(request.fromUserId);
+          })
+      } else {
+        await fetchAndSetUsers();
+      }
     }
+
+    if (auth0.isAuthenticated.value) {
+      await readBalance();
+    } else {
+      watch(this.auth0.isAuthenticated, readBalance);
+    }
+
   },
   methods: {
     updateBalance(newBalance: number) {
       this.balance = Math.round(newBalance * 100) / 100;
+    },
+    updateAmount(amount: number) {
+      this.amount = amount;
     },
     async fetchAndSetUsers(userId = null) {
       const accessToken = await this.auth0.getAccessTokenSilently();

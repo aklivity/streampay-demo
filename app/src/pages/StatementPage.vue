@@ -25,7 +25,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, ref} from 'vue';
+import {defineComponent, ref, watch} from 'vue';
 import {useAuth0} from '@auth0/auth0-vue';
 import {streamingUrl} from 'boot/axios';
 
@@ -56,30 +56,43 @@ export default defineComponent({
     }
   },
   async mounted() {
-    const accessToken = await this.auth0.getAccessTokenSilently();
+    const auth0 = this.auth0;
     const updateBalance = this.updateBalance;
     const updateTotalTransactionBalance = this.updateTotalTransactionBalance;
     const updateAverageTransactionBalance = this.updateAverageTransactionBalance;
+    let totalTransactionStream = this.totalTransactionStream;
+    let balanceStream = this.balanceStream;
+    let averageTransactionStream = this.averageTransactionStream;
 
-    this.balanceStream = new EventSource(`${streamingUrl}/balance-histories?access_token=${accessToken}`);
+    async function readStatement() {
+      const accessToken = await auth0.getAccessTokenSilently();
 
-    this.balanceStream.onmessage = function (event: MessageEvent) {
-      const balance = JSON.parse(event.data);
-      updateBalance(balance.balance, balance.timestamp);
-    };
+      balanceStream = new EventSource(`${streamingUrl}/balance-histories?access_token=${accessToken}`);
 
-    this.totalTransactionStream = new EventSource(`${streamingUrl}/total-transactions?access_token=${accessToken}`);
+      balanceStream.onmessage = function (event: MessageEvent) {
+        const balance = JSON.parse(event.data);
+        updateBalance(balance.balance, balance.timestamp);
+      };
 
-    this.totalTransactionStream.onmessage = function (event: MessageEvent) {
-      const totalTransaction = JSON.parse(event.data);
-      updateTotalTransactionBalance(totalTransaction.total);
-    };
+      totalTransactionStream = new EventSource(`${streamingUrl}/total-transactions?access_token=${accessToken}`);
 
-    this.averageTransactionStream = new EventSource(`${streamingUrl}/average-transactions?access_token=${accessToken}`);
+      totalTransactionStream.onmessage = function (event: MessageEvent) {
+        const totalTransaction = JSON.parse(event.data);
+        updateTotalTransactionBalance(totalTransaction.total);
+      };
 
-    this.averageTransactionStream.onmessage = function (event: MessageEvent) {
-      updateAverageTransactionBalance(event.data);
-    };
+      averageTransactionStream = new EventSource(`${streamingUrl}/average-transactions?access_token=${accessToken}`);
+
+      averageTransactionStream.onmessage = function (event: MessageEvent) {
+        updateAverageTransactionBalance(event.data);
+      };
+    }
+
+    if (auth0.isAuthenticated.value) {
+      await readStatement();
+    } else {
+      watch(this.auth0.isAuthenticated, readStatement);
+    }
   },
   methods: {
     updateBalance(newBalance: number, timestamp: number) {
