@@ -74,7 +74,7 @@ public class ProcessTransactionSupplier implements ProcessorSupplier<String, Tra
             final Headers balanceRecordHeaders = new RecordHeaders();
             balanceRecordHeaders.add(new RecordHeader("content-type", "application/json".getBytes()));
             final String userId = record.key();
-            double amount = 0;
+            double amount = -1;
             if (userId != null)
             {
                 double currentBalance = balanceStore.get(userId) == null ? 0 : balanceStore.get(userId).getBalance();
