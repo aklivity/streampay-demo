@@ -130,7 +130,7 @@ export default defineComponent({
             from,
             to,
             state,
-            amount: Math.round(Math.abs(activity.amount) * 100) / 100,
+            amount: Math.abs(activity.amount).toFixed(2),
             date: new Date (activity.timestamp)
           });
         }

@@ -179,12 +179,12 @@ export default defineComponent({
             ...authorization
           }
         })
-          .then((response) => {
-            const request = response.data;
-            updateAmount(request.amount);
+        .then((response) => {
+          const request = response.data;
+          updateAmount(request.amount);
 
-            fetchAndSetUsers(request.fromUserId);
-          })
+          fetchAndSetUsers(request.fromUserId);
+        })
       } else {
         await fetchAndSetUsers();
       }
@@ -199,7 +199,7 @@ export default defineComponent({
   },
   methods: {
     updateBalance(newBalance: number) {
-      this.balance = Math.round(newBalance * 100) / 100;
+      this.balance = +newBalance.toFixed(2);
     },
     updateAmount(amount: number) {
       this.amount = amount;
