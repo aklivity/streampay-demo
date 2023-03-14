@@ -65,7 +65,6 @@ services:
     image: docker.redpanda.com/vectorized/console:master-173596f
     networks:
       - net0
-    restart: on-failure
     entrypoint: /bin/sh
     command: -c "echo \"$$CONSOLE_CONFIG_FILE\" > /tmp/config.yml; /app/console"
     environment:

@@ -35,7 +35,7 @@
              key="amount"
              :props="props"
            >
-             <div v-if="props.row.eventName == 'PaymentSent'" class="text-subtitle1" style="color:red">
+             <div v-if="props.row.eventName === 'PaymentSent'" class="text-subtitle1" style="color:red">
                -${{ props.row.amount }}
              </div>
              <div v-else class="text-subtitle1" style="color:green" >
@@ -51,8 +51,8 @@
 
 <script lang="ts">
 import {defineComponent, ref, watch} from 'vue';
-import {useAuth0} from "@auth0/auth0-vue";
-import {streamingUrl} from "boot/axios";
+import {useAuth0} from '@auth0/auth0-vue';
+import {streamingUrl} from 'boot/axios';
 
 export default defineComponent({
   name: 'MainPage',
@@ -73,7 +73,8 @@ export default defineComponent({
       { name: 'amount', align: 'right', field: 'amount'},
     ]
 
-    const activities = ref([] as any);
+    const maxNumberOfActivities = 20;
+    const activities = ref(new Array(maxNumberOfActivities));
     const activitiesStream = null as EventSource | null;
 
     return {
@@ -82,6 +83,7 @@ export default defineComponent({
       user: auth0.user,
       tableRef,
       columns,
+      maxNumberOfActivities,
       activities,
       activitiesStream,
       pagination: {
@@ -92,6 +94,7 @@ export default defineComponent({
   async mounted() {
     const auth0 = this.auth0;
     const userId = this.user.sub;
+    const maxNumberOfActivities = this.maxNumberOfActivities;
     const activities = this.activities;
     let activitiesStream = this.activitiesStream;
 
@@ -124,7 +127,7 @@ export default defineComponent({
           const avatar = from.charAt(0).toUpperCase();
           const eventName = activity.eventName;
 
-          activities.unshift({
+          const newActivity = {
             eventName,
             avatar,
             from,
@@ -132,7 +135,14 @@ export default defineComponent({
             state,
             amount: Math.abs(activity.amount).toFixed(2),
             date: new Date (activity.timestamp)
-          });
+          };
+
+          if (activities.length > maxNumberOfActivities) {
+            activities.pop();
+            activities.unshift(newActivity);
+          } else {
+            activities.push(newActivity);
+          }
         }
       };
     }
