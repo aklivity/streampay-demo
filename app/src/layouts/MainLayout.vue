@@ -90,7 +90,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, ref, unref} from 'vue';
+import {defineComponent, ref, unref, watch} from 'vue';
 import {useAuth0} from '@auth0/auth0-vue';
 import {api, streamingUrl} from "boot/axios";
 import {watchEffectOnceAsync} from "@auth0/auth0-vue/src/utils";
@@ -113,28 +113,49 @@ export default defineComponent({
     }
   },
   async mounted() {
-    const accessToken = await this.auth0.getAccessTokenSilently();
     const incRequests =  this.incRequest;
     const decRequests =  this.decRequests;
     const updateBalance =  this.updateBalance;
+    const auth0 = this.auth0;
+    async function authenticatePage() {
+      const accessToken = await auth0.getAccessTokenSilently();
 
-    const requestStream = new EventSource(`${streamingUrl}/payment-requests?access_token=${accessToken}`);
+      const requestStream = new EventSource(`${streamingUrl}/payment-requests?access_token=${accessToken}`);
 
-    requestStream.addEventListener('delete', (event: MessageEvent) => {
-      decRequests();
-    }, false);
+      requestStream.addEventListener('delete', (event: MessageEvent) => {
+        decRequests();
+      }, false);
 
-    requestStream.onmessage = function () {
-      incRequests();
-    };
+      requestStream.onmessage = function () {
+        incRequests();
+      };
 
-    const balanceStream = new EventSource(`${streamingUrl}/current-balance?access_token=${accessToken}`);
+      const balanceStream = new EventSource(`${streamingUrl}/current-balance?access_token=${accessToken}`);
 
-    balanceStream.onmessage = function (event: MessageEvent) {
-      const balance = JSON.parse(event.data);
-      updateBalance(balance.balance);
-    };
-    await this.updateUser();
+      balanceStream.onmessage = function (event: MessageEvent) {
+        const balance = JSON.parse(event.data);
+        updateBalance(balance.balance);
+      };
+
+      const authorization = { Authorization: `Bearer ${accessToken}` };
+      await api.put(`/current-user`, {
+        'id': auth0.user.value.sub,
+        'name': auth0.user.value.name,
+        'username': auth0.user.value.nickname
+      }, {
+        headers: {
+          'Idempotency-Key': v4(),
+          ...authorization
+        }
+      })
+    }
+
+    if (auth0.isAuthenticated.value)
+    {
+      await authenticatePage();
+    } else {
+      watch(this.auth0.isAuthenticated, authenticatePage);
+    }
   },
   methods: {
      logout() {
@@ -153,41 +174,27 @@ export default defineComponent({
     updateBalance(newBalance: number) {
       this.balance = Math.round(newBalance * 100) / 100;
     },
-    async updateUser() {
-      const accessToken = await this.auth0.getAccessTokenSilently();
-      const authorization = { Authorization: `Bearer ${accessToken}` };
-      await api.put(`/current-user`, {
-        "id": this.user.sub,
-        "name": this.user.name,
-        "username": this.user.nickname
-      }, {
-        headers: {
-          'Idempotency-Key': v4(),
-          ...authorization
-        }
-      })
-    }
   },
   async beforeCreate() {
-    const fn = async () => {
+    const isAuthenticated = async () => {
       if (unref(this.auth0.isAuthenticated)) {
         return true;
       }
 
       await this.auth0.loginWithRedirect({
-        appState: { target: "/" }
+        appState: { target: '/' }
       });
 
       return false;
     };
 
     if (!unref(this.auth0.isLoading)) {
-      return fn();
+      return isAuthenticated();
     }
 
     await watchEffectOnceAsync(() => !unref(this.auth0.isLoading));
 
-    return fn();
+    return isAuthenticated();
   }
 
 });

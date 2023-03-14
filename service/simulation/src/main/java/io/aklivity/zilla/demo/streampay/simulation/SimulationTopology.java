@@ -44,7 +44,6 @@ public class SimulationTopology
     @Autowired
     private SimulateUser simulateUser;
 
-
     public SimulationTopology()
     {
     }
@@ -54,9 +53,8 @@ public class SimulationTopology
         StreamsBuilder simulationKafkaStreamsBuilder)
     {
         simulationKafkaStreamsBuilder.stream(usersTopic, Consumed.with(stringSerde, userSerde))
-                .filter((key, value) -> !key.startsWith("virtual-user"))
+                .filter((key, value) -> !key.startsWith("virtual-user") && value != null)
                 .process(() -> new UserProcessor(simulateUser));
-
 
         simulationKafkaStreamsBuilder.stream(paymentRequestsTopic, Consumed.with(stringSerde, paymentRequestSerde))
             .filter((key, value) -> value != null && value.getToUserId().startsWith("virtual-user"))

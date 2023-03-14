@@ -35,7 +35,7 @@
              key="amount"
              :props="props"
            >
-             <div v-if="props.row.eventName == 'PaymentSent'" class="text-subtitle1" style="color:red">
+             <div v-if="props.row.eventName === 'PaymentSent'" class="text-subtitle1" style="color:red">
                -${{ props.row.amount }}
              </div>
              <div v-else class="text-subtitle1" style="color:green" >
@@ -48,10 +48,11 @@
   </q-page>
 </template>
 
+
 <script lang="ts">
-import {defineComponent, ref} from 'vue';
-import {useAuth0} from "@auth0/auth0-vue";
-import {streamingUrl} from "boot/axios";
+import {defineComponent, ref, watch} from 'vue';
+import {useAuth0} from '@auth0/auth0-vue';
+import {streamingUrl} from 'boot/axios';
 
 export default defineComponent({
   name: 'MainPage',
@@ -72,7 +73,8 @@ export default defineComponent({
       { name: 'amount', align: 'right', field: 'amount'},
     ]
 
-    const activities = ref([] as any);
+    const maxNumberOfActivities = 20;
+    const activities = ref(new Array(maxNumberOfActivities));
     const activitiesStream = null as EventSource | null;
 
     return {
@@ -81,6 +83,7 @@ export default defineComponent({
       user: auth0.user,
       tableRef,
       columns,
+      maxNumberOfActivities,
       activities,
       activitiesStream,
       pagination: {
@@ -89,47 +92,67 @@ export default defineComponent({
     }
   },
   async mounted() {
-    const accessToken = await this.auth0.getAccessTokenSilently();
+    const auth0 = this.auth0;
     const userId = this.user.sub;
-    this.activitiesStream = new EventSource(`${streamingUrl}/activities?access_token=${accessToken}`);
+    const maxNumberOfActivities = this.maxNumberOfActivities;
     const activities = this.activities;
+    let activitiesStream = this.activitiesStream;
 
-    this.activitiesStream.onopen = function () {
-      activities.splice(0);
+    async function readActivities() {
+      const accessToken = await auth0.getAccessTokenSilently();
+      activitiesStream = new EventSource(`${streamingUrl}/activities?access_token=${accessToken}`);
+
+      activitiesStream.onopen = function () {
+        activities.splice(0);
+      }
+
+      activitiesStream.onmessage = function (event: MessageEvent) {
+        const activity = JSON.parse(event.data);
+        if (activity.eventName == 'PaymentReceived' && activity.fromUserId == userId ||
+          activity.eventName == 'PaymentSent' && activity.toUserId == userId) {
+
+        } else {
+          let state = '';
+
+          if (activity.eventName == 'PaymentSent') {
+            state = 'paid';
+          } else if (activity.eventName == 'PaymentReceived') {
+            state = 'paid';
+          } else if (activity.eventName == 'PaymentRequested') {
+            state = 'requested';
+          }
+          const from = activity.fromUserId == userId ? 'You' : activity.fromUserName;
+          const to = activity.toUserId == userId ? 'you' : activity.toUserName;
+
+          const avatar = from.charAt(0).toUpperCase();
+          const eventName = activity.eventName;
+
+          const newActivity = {
+            eventName,
+            avatar,
+            from,
+            to,
+            state,
+            amount: Math.abs(activity.amount).toFixed(2),
+            date: new Date (activity.timestamp)
+          };
+
+          if (activities.length > maxNumberOfActivities) {
+            activities.pop();
+            activities.unshift(newActivity);
+          } else {
+            activities.push(newActivity);
+          }
+        }
+      };
     }
 
-    this.activitiesStream.onmessage = function (event: MessageEvent) {
-      const activity = JSON.parse(event.data);
-      if (activity.eventName == 'PaymentReceived' && activity.fromUserId == userId ||
-        activity.eventName == 'PaymentSent' && activity.toUserId == userId) {
-
-      } else {
-        let state = '';
-
-        if (activity.eventName == 'PaymentSent') {
-          state = 'paid';
-        } else if (activity.eventName == 'PaymentReceived') {
-          state = 'paid';
-        } else if (activity.eventName == 'PaymentRequested') {
-          state = 'requested';
-        }
-        const from = activity.fromUserId == userId ? 'You' : activity.fromUserName;
-        const to = activity.toUserId == userId ? 'you' : activity.toUserName;
-
-        const avatar = from.charAt(0).toUpperCase();
-        const eventName = activity.eventName;
-
-        activities.unshift({
-          eventName,
-          avatar,
-          from,
-          to,
-          state,
-          amount: Math.round(Math.abs(activity.amount) * 100) / 100,
-          date: new Date (activity.timestamp)
-        });
-      }
-    };
+    if (this.auth0.isAuthenticated.value)
+    {
+      await readActivities();
+    } else {
+      watch(this.auth0.isAuthenticated, readActivities);
+    }
   },
   unmounted() {
     this.activitiesStream?.close();

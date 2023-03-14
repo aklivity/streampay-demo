@@ -22,7 +22,7 @@
            <q-td  key="requester" :props="props">
              <div style="margin-bottom: 20px; margin-top: 20px;">
                <div class="text-h6">
-                 <b>{{ props.row.request.fromUserName }}</b> requested <b> ${{ props.row.request.amount }}</b>
+                 <b>{{ props.row.request.fromUserName }}</b> requested <b> ${{ props.row.request.amount.toFixed(2) }}</b>
                </div>
                <div class="text-subtitle2">
                  {{ props.row.request.notes }}
@@ -49,7 +49,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, ref, unref} from 'vue';
+import {defineComponent, ref, unref, watch} from 'vue';
 import {useAuth0} from "@auth0/auth0-vue";
 import {streamingUrl} from "boot/axios";
 import {Buffer} from "buffer";
@@ -85,27 +85,39 @@ export default defineComponent({
     }
   },
   async mounted() {
-    const accessToken = await this.auth0.getAccessTokenSilently();
-    this.requestStream = new EventSource(`${streamingUrl}/payment-requests?access_token=${accessToken}`);
+    const auth0 = this.auth0;
     const requests = this.requests;
+    let requestStream = this.requestStream;
 
-    this.requestStream.onopen = function () {
-      requests.slice(0);
+    async function readRequest() {
+      const accessToken = await auth0.getAccessTokenSilently();
+      requestStream = new EventSource(`${streamingUrl}/payment-requests?access_token=${accessToken}`);
+
+      requestStream.onopen = function () {
+        requests.slice(0);
+      }
+
+      requestStream.addEventListener('delete', (event: MessageEvent) => {
+        const lastEventId = JSON.parse(event.lastEventId?.toString());
+        const key = Buffer.from(lastEventId[0], 'base64').toString('utf8');
+        const index = requests.findIndex((r: { id: string; }) => r.id === key);
+        requests.splice(index, 1);
+      }, false);
+
+      requestStream.onmessage = function (event: MessageEvent) {
+        const lastEventId = JSON.parse(event.lastEventId);
+        const key:string = Buffer.from(lastEventId[0], 'base64').toString('utf8');
+        const paymentRequest = JSON.parse(event.data)
+        requests.push({id: key, request: paymentRequest})
+      };
     }
 
-    this.requestStream.addEventListener('delete', (event: MessageEvent) => {
-      const lastEventId = JSON.parse(event.lastEventId?.toString());
-      const key = Buffer.from(lastEventId[0], 'base64').toString('utf8');
-      const index = requests.findIndex((r: { id: string; }) => r.id === key);
-      requests.splice(index, 1);
-    }, false);
+    if (auth0.isAuthenticated.value) {
+      await readRequest();
+    } else {
+      watch(this.auth0.isAuthenticated, readRequest);
+    }
 
-    this.requestStream.onmessage = function (event: MessageEvent) {
-      const lastEventId = JSON.parse(event.lastEventId);
-      const key:string = Buffer.from(lastEventId[0], 'base64').toString('utf8');
-      const paymentRequest = JSON.parse(event.data)
-      requests.push({id: key, request: paymentRequest})
-    };
   }
 });
 </script>

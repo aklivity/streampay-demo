@@ -75,6 +75,9 @@ bindings:
           - headers:
               :method: GET
               :path: /users
+          - headers:
+              :method: GET
+              :path: /payment-requests/*
         exit: http-kafka_proxya3342d5b-71aa-44f4-b20d-59994b2482c1
     exit: http_filesystem_proxya3342d5b-71aa-44f4-b20d-59994b2482c1
   http_filesystem_proxya3342d5b-71aa-44f4-b20d-59994b2482c1:
@@ -229,6 +232,18 @@ bindings:
         guarded:
           jwt3dc23de6-5185-46f8-86f7-717c3b023d8a:
             - read:users
+      - when:
+          - method: GET
+            path: /payment-requests/{id}
+        exit: kafka_cache_client1808eec1-480a-4f24-af7d-3a99101cc5b3
+        with:
+          capability: fetch
+          topic: payment-requests
+          filters:
+            - key: ${params.id}
+        guarded:
+          jwt3dc23de6-5185-46f8-86f7-717c3b023d8a:
+            - read:payment-requests
   kafka_cache_client1808eec1-480a-4f24-af7d-3a99101cc5b3:
     type: kafka
     kind: cache_client
