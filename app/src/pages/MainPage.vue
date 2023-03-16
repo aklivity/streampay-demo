@@ -73,8 +73,7 @@ export default defineComponent({
       { name: 'amount', align: 'right', field: 'amount'},
     ]
 
-    const maxNumberOfActivities = 20;
-    const activities = ref(new Array(maxNumberOfActivities));
+    const activities = ref([] as any);
     const activitiesStream = null as EventSource | null;
 
     return {
@@ -83,7 +82,6 @@ export default defineComponent({
       user: auth0.user,
       tableRef,
       columns,
-      maxNumberOfActivities,
       activities,
       activitiesStream,
       pagination: {
@@ -94,7 +92,6 @@ export default defineComponent({
   async mounted() {
     const auth0 = this.auth0;
     const userId = this.user.sub;
-    const maxNumberOfActivities = this.maxNumberOfActivities;
     const activities = this.activities;
     let activitiesStream = this.activitiesStream;
 
@@ -137,7 +134,7 @@ export default defineComponent({
             date: new Date (activity.timestamp)
           };
 
-          if (activities.length > maxNumberOfActivities) {
+          if (activities.length > 20) {
             activities.pop();
             activities.unshift(newActivity);
           } else {

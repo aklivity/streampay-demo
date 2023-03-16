@@ -36,7 +36,7 @@ export default defineComponent({
 
     const balanceSeries = ref([{
       name: 'Balance',
-      data: new Array(20)
+      data: [] as any
     }]);
     const balanceStream = null as EventSource | null;
     const totalTransaction = ref(0);
@@ -97,12 +97,11 @@ export default defineComponent({
   methods: {
     updateBalance(newBalance: number, timestamp: number) {
       let balance = { x: new Date(timestamp).toLocaleString(), y: newBalance };
-      let balanceSery = this.balanceSeries[0].data;
-      if (balanceSery.length > 20) {
-        balanceSery.pop();
-        balanceSery.unshift(balance);
+      if (this.balanceSeries[0].data.length > 20) {
+        this.balanceSeries[0].data.pop();
+        this.balanceSeries[0].data.unshift(balance);
       } else {
-        balanceSery.push(balance);
+        this.balanceSeries[0].data.push(balance);
       }
     },
     updateTotalTransactionBalance(total: number) {
