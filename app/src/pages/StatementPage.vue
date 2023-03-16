@@ -91,7 +91,7 @@ export default defineComponent({
     if (auth0.isAuthenticated.value) {
       await readStatement();
     } else {
-      watch(this.auth0.isAuthenticated, readStatement);
+      watch(auth0.isAuthenticated, readStatement);
     }
   },
   methods: {
