@@ -41,22 +41,24 @@ public class SimulatePaymentRequest
 
     public void requestPaymentForVirtualUser()
     {
-        final PaymentRequest paymentRequest = creatPaymentRequestForVirtualUser();
+        String key = UUID.randomUUID().toString();
+        final PaymentRequest paymentRequest = creatPaymentRequestForVirtualUser(key);
         if (paymentRequest != null)
         {
-            kafkaTemplate.send(paymentRequestsTopic, UUID.randomUUID().toString(), paymentRequest);
+            kafkaTemplate.send(paymentRequestsTopic, key, paymentRequest);
         }
     }
 
     public void requestPaymentForRealUser()
     {
-        final PaymentRequest paymentRequest = creatPaymentRequestForRealUser();
+        String key = UUID.randomUUID().toString();
+        final PaymentRequest paymentRequest = creatPaymentRequestForRealUser(key);
         if (paymentRequest != null)
         {
             Message<PaymentRequest> message = MessageBuilder
                 .withPayload(paymentRequest)
                 .setHeader(KafkaHeaders.TOPIC, paymentRequestsTopic)
-                .setHeader(KafkaHeaders.KEY, UUID.randomUUID().toString())
+                .setHeader(KafkaHeaders.KEY, key)
                 .setHeader("content-type", "application/json")
                 .setHeader("zilla:identity", paymentRequest.getToUserId())
                 .build();
@@ -64,7 +66,8 @@ public class SimulatePaymentRequest
         }
     }
 
-    private PaymentRequest creatPaymentRequestForVirtualUser()
+    private PaymentRequest creatPaymentRequestForVirtualUser(
+        String key)
     {
         final User fromUser = simulateUser.randomVirtualUser();
         final User toUser = simulateUser.randomVirtualUser();
@@ -76,6 +79,7 @@ public class SimulatePaymentRequest
         if (fromUser != toUser)
         {
             paymentRequest = PaymentRequest.builder()
+                .id(key)
                 .amount(amount)
                 .fromUserId(fromUser.getId())
                 .fromUserName(fromUser.getName())
@@ -92,7 +96,8 @@ public class SimulatePaymentRequest
         return paymentRequest;
     }
 
-    private PaymentRequest creatPaymentRequestForRealUser()
+    private PaymentRequest creatPaymentRequestForRealUser(
+        String key)
     {
         final User fromUser = simulateUser.randomVirtualUser();
         final User toUser = simulateUser.randomRealUser();
@@ -104,6 +109,7 @@ public class SimulatePaymentRequest
         if (toUser != null)
         {
             paymentRequest = PaymentRequest.builder()
+                .id(key)
                 .amount(amount)
                 .fromUserId(fromUser.getId())
                 .fromUserName(fromUser.getName())

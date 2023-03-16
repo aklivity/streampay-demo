@@ -78,6 +78,7 @@ public class SimulationTopologyTest
     public void shouldProcessPaymentRequest()
     {
         paymentRequestsInTopic.pipeInput(new TestRecord<>("virtual-user-1", PaymentRequest.builder()
+            .id("virtual-user-1")
             .amount(123)
             .fromUserId("virtual-user-1")
             .toUserId("virtual-user-2")

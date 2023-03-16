@@ -14,6 +14,7 @@ import lombok.NoArgsConstructor;
 @Getter
 public class PaymentRequest
 {
+    String id;
     String fromUserId;
     String fromUserName;
     String toUserId;

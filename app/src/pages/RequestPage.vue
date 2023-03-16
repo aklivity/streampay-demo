@@ -39,7 +39,7 @@
                  label="Pay"
                  color="primary"
                  rounded
-                 @click="this.$router.push({ path: '/payorrequest/' + props.row.id })" />
+                 @click="this.$router.push({ path: '/payorrequest/' + props.row.request.id })" />
              </div>
            </q-td>
          </q-tr>
@@ -51,7 +51,7 @@
 <script lang="ts">
 import {defineComponent, ref, unref, watch} from 'vue';
 import {useAuth0} from "@auth0/auth0-vue";
-import {streamingUrl} from "boot/axios";
+import {api, streamingUrl} from "boot/axios";
 import {Buffer} from "buffer";
 import {watchEffectOnceAsync} from "@auth0/auth0-vue/src/utils";
 
@@ -61,7 +61,6 @@ export default defineComponent({
     const auth0 = useAuth0();
 
     const tableRef = ref(null);
-    const requestStream = null as EventSource | null;
 
     const columns = [
       {
@@ -80,44 +79,35 @@ export default defineComponent({
       auth0,
       tableRef,
       columns,
-      requests,
-      requestStream
+      requests
     }
   },
   async mounted() {
     const auth0 = this.auth0;
     const requests = this.requests;
-    let requestStream = this.requestStream;
 
-    async function readRequest() {
+    async function readRequests() {
       const accessToken = await auth0.getAccessTokenSilently();
-      requestStream = new EventSource(`${streamingUrl}/payment-requests?access_token=${accessToken}`);
+      const authorization = {Authorization: `Bearer ${accessToken}`};
 
-      requestStream.onopen = function () {
-        requests.slice(0);
-      }
-
-      requestStream.addEventListener('delete', (event: MessageEvent) => {
-        const lastEventId = JSON.parse(event.lastEventId?.toString());
-        const key = Buffer.from(lastEventId[0], 'base64').toString('utf8');
-        const index = requests.findIndex((r: { id: string; }) => r.id === key);
-        requests.splice(index, 1);
-      }, false);
-
-      requestStream.onmessage = function (event: MessageEvent) {
-        const lastEventId = JSON.parse(event.lastEventId);
-        const key:string = Buffer.from(lastEventId[0], 'base64').toString('utf8');
-        const paymentRequest = JSON.parse(event.data)
-        requests.push({id: key, request: paymentRequest})
-      };
+      await api.get('/current-payment-requests', {
+        headers: {
+          ...authorization
+        }
+      })
+      .then((response) => {
+        const paymentRequests = response.data;
+        for (let paymentRequest of paymentRequests) {
+          requests.push({request: paymentRequest})
+        }
+      });
     }
 
     if (auth0.isAuthenticated.value) {
-      await readRequest();
+      await readRequests();
     } else {
-      watch(this.auth0.isAuthenticated, readRequest);
+      watch(auth0.isAuthenticated, readRequests);
     }
-
   }
 });
 </script>

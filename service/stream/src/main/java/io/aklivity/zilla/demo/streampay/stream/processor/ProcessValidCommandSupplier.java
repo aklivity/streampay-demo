@@ -191,8 +191,10 @@ public class ProcessValidCommandSupplier implements ProcessorSupplier<String, Co
             final String fromUserName = userStore.get(fromUserId).getName();
             final String toUserName = userStore.get(toUserId).getName();
 
-            final Record paymentRequest = new Record(UUID.randomUUID().toString(),
+            String key = UUID.randomUUID().toString();
+            final Record paymentRequest = new Record(key,
                 PaymentRequest.builder()
+                    .id(key)
                     .fromUserId(fromUserId)
                     .fromUserName(fromUserName)
                     .toUserId(toUserId)
