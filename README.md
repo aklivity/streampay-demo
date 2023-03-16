@@ -28,7 +28,7 @@ such as `PayCommand`, `RequestCommand`.
 ## Redpanda Console
 Redpanda Console is a developer-friendly UI for managing your Kafka/Redpanda workloads. Console gives you a simple,
 interactive approach for gaining visibility into your topics, masking data, managing consumer groups, and exploring 
-real-time data with time-travel debugging.
+real-time data with time-travel debugging. You can access it at http://localhost:8080.
 
 ## Event Processing Service
 This service responsible for processing commands such as `PayCommand`, `RequestCommand` and producing messages

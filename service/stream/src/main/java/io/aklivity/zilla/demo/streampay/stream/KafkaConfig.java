@@ -5,16 +5,22 @@ package io.aklivity.zilla.demo.streampay.stream;
 
 import static org.apache.kafka.streams.StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG;
 import static org.apache.kafka.streams.StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG;
-import static org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler.StreamThreadExceptionResponse.REPLACE_THREAD;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import jakarta.annotation.PostConstruct;
+
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.kafka.StreamsBuilderFactoryBeanCustomizer;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -41,6 +47,9 @@ public class KafkaConfig
     private final String jaasTemplate = "org.apache.kafka.common.security.scram.ScramLoginModule required" +
         " username=\"%s\" password=\"%s\";";
     private final String jaasCfg = String.format(jaasTemplate, "user", "redpanda");
+
+    @Autowired
+    private ApplicationContext context;
 
     public KafkaConfig()
     {
@@ -80,9 +89,26 @@ public class KafkaConfig
         return props;
     }
 
-    @Bean
-    public StreamsBuilderFactoryBeanCustomizer streamsBuilderFactoryBeanCustomizer()
+    @PostConstruct
+    public void checkConnection()
     {
-        return sfb -> sfb.setStreamsUncaughtExceptionHandler(exception -> REPLACE_THREAD);
+        Map<String, Object> conf = commonStreamsConfigProperties();
+        conf.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, 15000);
+        conf.put(AdminClientConfig.RETRIES_CONFIG, 1);
+
+        DescribeClusterResult describeClusterResult = null;
+        try (AdminClient adminClient = AdminClient.create(conf))
+        {
+            describeClusterResult = adminClient.describeCluster();
+        }
+        catch (Exception e)
+        {
+        }
+
+        if (describeClusterResult == null ||
+            describeClusterResult.clusterId().isCompletedExceptionally())
+        {
+            ((ConfigurableApplicationContext) context).close();
+        }
     }
 }

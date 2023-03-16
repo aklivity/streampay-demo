@@ -5,19 +5,24 @@ package io.aklivity.zilla.demo.streampay.simulation.config;
 
 import static org.apache.kafka.streams.StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG;
 import static org.apache.kafka.streams.StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG;
-import static org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler.
-    StreamThreadExceptionResponse.REPLACE_THREAD;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import jakarta.annotation.PostConstruct;
+
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.admin.AdminClientConfig;
+import org.apache.kafka.clients.admin.DescribeClusterResult;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.errors.LogAndContinueExceptionHandler;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.kafka.StreamsBuilderFactoryBeanCustomizer;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -49,6 +54,9 @@ public class KafkaConfig
         " username=\"%s\" password=\"%s\";";
     private final String jaasCfg = String.format(jaasTemplate, "user", "redpanda");
 
+    @Autowired
+    private ApplicationContext context;
+
     public KafkaConfig()
     {
     }
@@ -74,12 +82,6 @@ public class KafkaConfig
 
         props.put("commit.interval.ms", 0);
         return props;
-    }
-
-    @Bean
-    public StreamsBuilderFactoryBeanCustomizer streamsBuilderFactoryBeanCustomizer()
-    {
-        return sfb -> sfb.setStreamsUncaughtExceptionHandler(exception -> REPLACE_THREAD);
     }
 
     @Bean
@@ -114,5 +116,28 @@ public class KafkaConfig
         props.put("sasl.jaas.config", jaasCfg);
 
         return props;
+    }
+
+    @PostConstruct
+    public void checkConnection()
+    {
+        Map<String, Object> conf = commonStreamsConfigProperties();
+        conf.put(AdminClientConfig.REQUEST_TIMEOUT_MS_CONFIG, 15000);
+        conf.put(AdminClientConfig.RETRIES_CONFIG, 1);
+
+        DescribeClusterResult describeClusterResult = null;
+        try (AdminClient adminClient = AdminClient.create(conf))
+        {
+            describeClusterResult = adminClient.describeCluster();
+        }
+        catch (Exception e)
+        {
+        }
+
+        if (describeClusterResult == null ||
+            describeClusterResult.clusterId().isCompletedExceptionally())
+        {
+            ((ConfigurableApplicationContext) context).close();
+        }
     }
 }
