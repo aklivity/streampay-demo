@@ -172,7 +172,7 @@ export default defineComponent({
       this.request = currentRequests < 0 ? 0 : currentRequests;
     },
     updateBalance(newBalance: number) {
-      this.balance = Math.round(newBalance * 100) / 100;
+      this.balance = +newBalance.toFixed(2);
     },
   },
   async beforeCreate() {

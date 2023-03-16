@@ -143,6 +143,7 @@ public class StatsTopologyTest
             .build()));
 
         paymentRequestsInTopic.pipeInput(new TestRecord<>("alice", PaymentRequest.builder()
+            .id("alice")
             .amount(123)
             .fromUserId("alice")
             .toUserId("bob")

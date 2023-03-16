@@ -77,6 +77,9 @@ bindings:
               :path: /users
           - headers:
               :method: GET
+              :path: /current-payment-requests
+          - headers:
+              :method: GET
               :path: /payment-requests/*
         exit: http-kafka_proxya3342d5b-71aa-44f4-b20d-59994b2482c1
     exit: http_filesystem_proxya3342d5b-71aa-44f4-b20d-59994b2482c1
@@ -241,6 +244,21 @@ bindings:
           topic: payment-requests
           filters:
             - key: ${params.id}
+        guarded:
+          jwt3dc23de6-5185-46f8-86f7-717c3b023d8a:
+            - read:payment-requests
+      - when:
+          - method: GET
+            path: /current-payment-requests
+        exit: kafka_cache_client1808eec1-480a-4f24-af7d-3a99101cc5b3
+        with:
+          capability: fetch
+          topic: payment-requests
+          merge:
+            content-type: application/json
+          filters:
+            - headers:
+                zilla:identity: ${guarded['jwt3dc23de6-5185-46f8-86f7-717c3b023d8a'].identity}
         guarded:
           jwt3dc23de6-5185-46f8-86f7-717c3b023d8a:
             - read:payment-requests
