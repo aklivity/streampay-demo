@@ -64,7 +64,7 @@ cd ..
 The above command generates `dist` folder with all the necessary files to be hosted by Zilla API Gateway.
 
 ## Zilla API Gateway
-Zilla API Gateway hosts both app UI and APIs. Following endpoints are configured in `zilla.jon`
+Zilla API Gateway hosts both app UI and APIs. Following endpoints are configured in `stack/conf/zilla.yaml`
 
 | Protocol | Method | Endpoint              | Topic                |
 |----------|--------|-----------------------|----------------------|
